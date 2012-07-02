@@ -1,12 +1,13 @@
-﻿import Image, re, os, subprocess, sys
+﻿import Image, re, os, subprocess
 from vdfparser import VDF
 from subprocess import PIPE, Popen
 import wikitools
 from uploadFile import *
 
-if not os.path.isfile('pngcrush.exe'):
-	print 'Could not find pngcrush.exe\nExiting'
-	sys.exit()
+if os.path.isfile('pngcrush.exe'):
+	pngcrush = True
+else:
+	pngcrush = False
 
 def get_file_list(folder):
 	""" Returns list of .png files in folder. """
@@ -49,9 +50,10 @@ def upload_item_icons(wikiUsername, wikiPassword, folder, wikiAddress = r'http:/
 		itemname = schema.get_localized_item_name(item['item_name']).encode('utf8')
 		newfilename = r'Item icon {0}.png'.format(itemname)
 		crop_image(file, folder, newfilename)
-		process = Popen(['pngcrush', '-rem', 'gAMA', '-rem', 'cHRM', '-rem', 'iCCP', '-rem', 'sRGB', '-brute', folder + os.sep + newfilename, folder + os.sep + newfilename + 'temp'], stdout = subprocess.PIPE).communicate()[0]
-		os.remove(folder + os.sep + newfilename)
-		os.rename(folder + os.sep + newfilename + 'temp', folder + os.sep + newfilename)
+		if pngcrush:
+			process = Popen(['pngcrush', '-rem', 'gAMA', '-rem', 'cHRM', '-rem', 'iCCP', '-rem', 'sRGB', '-brute', folder + os.sep + newfilename, folder + os.sep + newfilename + 'temp'], stdout = subprocess.PIPE).communicate()[0]
+			os.remove(folder + os.sep + newfilename)
+			os.rename(folder + os.sep + newfilename + 'temp', folder + os.sep + newfilename)
 
 		success = False
 		n = 0
