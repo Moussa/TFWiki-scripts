@@ -1,4 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
+# A script to upload updated tf_*.txt files after a patch to the wiki
+
 import re, os
 import wikitools
 import git
