@@ -4,9 +4,14 @@
 
 import re
 import wikitools
+import git
 
-fileRe = re.compile(r'^Index:\s*([^\r\n]*)\s+={10,}[\r\n]+((?:(?!Index:).*[\r\n]+)+)', re.MULTILINE)
-lineMatch = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+),(\d+)\s*@@$')
+lineMatch = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+),(\d+)\s*@@')
+lineMatch2 = re.compile(r'^@@\s*-(\d+)\s*\+(\d+),(\d+)\s*@@')
+lineMatch3 = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+)\s*@@')
+
+binaryFileRe = re.compile(r'^Binary files (.+) and (.+) differ')
+textFileRe = re.compile(r'^--- (.[^\n]+)\n\+\+\+ (.[^\n]+)\n(.+)', re.DOTALL)
 
 def u(s):
 	if type(s) is type(u''):
@@ -30,31 +35,55 @@ def u(s):
 		except:
 			return s
 
-def pootDiff(wiki, patchName, diffdata):
-	diffdata = u(diffdata)
+def pootDiff(wiki, patchName, gitRepo):
 	patchName = u(patchName)
 	files = []
-	for r in fileRe.finditer(diffdata):
-		f = u(r.group(1))
-		contents = u(r.group(2)).strip()
-		isBinary = contents.find('svn:mime-type = application/octet-stream') != -1
+	repo = git.Repo(gitRepo)
+	head_commit = repo.head.commit
+	diffs = head_commit.diff(create_patch = True)
+
+	for diff in diffs:
+		if re.search(binaryFileRe, diff.diff) is not None:
+			isBinary = True
+			contents = u''
+		else:
+			isBinary = False
+			contents = u(re.search(textFileRe, diff.diff).group(3)).strip()
+
+		if diff.a_mode and isBinary:
+			f = re.search(binaryFileRe, diff.diff).group(1)[2:].strip()
+		elif diff.a_mode and not isBinary:
+			f = re.search(textFileRe, diff.diff).group(1)[2:].strip()
+		elif diff.b_mode and isBinary:
+			f = re.search(binaryFileRe, diff.diff).group(2)[2:].strip()
+		elif diff.b_mode and not isBinary:
+			f = re.search(textFileRe, diff.diff).group(2)[2:].strip()
+		
+		isNew = diff.new_file
+		isDeleted = diff.deleted_file
+
 		files.append({
 			'name': f,
 			'contents': contents,
-			'isBinary': isBinary
+			'isBinary': isBinary,
+			'isNew': isNew,
+			'isDeleted': isDeleted
 		})
+
 	def cmpFiles(left, right):
 		c1 = cmp(left['isBinary'], right['isBinary'])
 		if c1:
 			return c1
 		return cmp(left['name'], right['name'])
 	files.sort(cmp=cmpFiles)
+
 	def formatFile(f):
-		isDelete = False
-		isAdd = False
+		isDelete = f['isDeleted']
+		isAdd = f['isNew']
 		isBinary = f['isBinary']
 		contents = []
 		lines = f['contents'].split(u'\n')
+
 		def getLineContent(l):
 			if not l.strip():
 				return u'&nbsp;'
@@ -62,34 +91,44 @@ def pootDiff(wiki, patchName, diffdata):
 		diffOpen = False
 		lineOld = -1
 		lineNew = -1
-		for l in lines:
-			l = l.replace(u'\r', '').replace(u'\n', '')
-			lineRes = lineMatch.search(l)
-			if lineRes is not None:
-				if not int(lineRes.group(2)) and not int(lineRes.group(3)):
-					isDelete = True
-					contents = []
-					break
-				if diffOpen:
-					contents.append((u'\u2026'))
-				diffOpen = True
-				lineOld = int(lineRes.group(1))
-				lineNew = int(lineRes.group(2))
-			elif (l[:3] == u'---' and l.find(u'(revision 0)') != -1) or l == u'Added: svn:mime-type':
-				isAdd = True
-			elif l[:14] == u'Cannot display':
-				isBinary = True
-			elif diffOpen and len(l):
-				if l[0] == u' ':
-					contents.append((u' ', lineOld, lineNew, l[1:]))
-					lineOld += 1
-					lineNew += 1
-				elif l[0] == u'+':
-					contents.append((u'+', lineNew, l[1:]))
-					lineNew += 1
-				elif l[0] == u'-':
-					contents.append((u'-', lineOld, l[1:]))
-					lineOld += 1
+
+		if not isBinary:
+			for l in lines:
+				l = l.replace(u'\r', '').replace(u'\n', '')
+				lineRes = lineMatch.search(l)
+				lineRes2 = lineMatch2.search(l)
+				lineRes3 = lineMatch3.search(l)
+				
+				if lineRes is not None or lineRes2 is not None or lineRes3 is not None:
+					if lineRes:
+						res = lineRes.group(1)
+						res2 = lineRes.group(2)
+						res3 = lineRes.group(3)
+					elif lineRes2:
+						res = lineRes2.group(1)
+						res2 = lineRes2.group(2)
+						res3 = lineRes2.group(3)
+					elif lineRes3:
+						res = lineRes3.group(1)
+						res2 = lineRes3.group(2)
+						res3 = 1
+
+					if diffOpen:
+						contents.append((u'\u2026'))
+					diffOpen = True
+					lineOld = int(res)
+					lineNew = int(res2)
+				elif diffOpen and len(l):
+					if l[0] == u' ':
+						contents.append((u' ', lineOld, lineNew, l[1:]))
+						lineOld += 1
+						lineNew += 1
+					elif l[0] == u'+':
+						contents.append((u'+', lineNew, l[1:]))
+						lineNew += 1
+					elif l[0] == u'-':
+						contents.append((u'-', lineOld, l[1:]))
+						lineOld += 1
 		ret = u'<div class="diff-file'
 		if isDelete:
 			ret += u' diff-file-deleted'
@@ -152,17 +191,19 @@ def pootDiff(wiki, patchName, diffdata):
 			finalText = u(u''.join(diffRet))
 			n = 0
 			success = False
-			while n < 5 and not success:
+			while n < 10 and not success:
 				try:
-					wikitools.page.Page(wiki, subPageName).edit(finalText, summary=u'Diff of file "' + f['name'] + u'" for patch [[:' + patchName + u']].', minor=True, bot=True, skipmd5=True)
+					wikitools.page.Page(wiki, subPageName).edit(finalText, summary=u'Diff of file "' + f['name'] + u'" for patch [[:' + patchName + u']].', minor=True, bot=True, skipmd5=True, timeout=60)
 					success = True
 				except:
+					print 'Failed to edit, attempt %s of 10' % str(n)
 					n += 1
 			if not success:
 				wikitools.page.Page(wiki, subPageName).edit(u'<div class="diff-file">File too large to diff</div>', summary=u'Diff of file "' + f['name'] + u'" for patch [[:' + patchName + u']].', minor=True, bot=True, skipmd5=True)
 		ret += u'</div>'
 		return ret
 	patchDiff = u''
+
 	for f in files:
 		print 'Processing file:', f['name'], 'in patch:', patchName
 		d = formatFile(f)
@@ -171,10 +212,10 @@ def pootDiff(wiki, patchName, diffdata):
 	print 'Editing patch diff page:', u'Template:PatchDiff/' + patchName
 	wikitools.page.Page(wiki, u'Template:PatchDiff/' + patchName).edit(patchDiff, summary=u'Diff of patch [[:' + patchName + u']].', minor=True, bot=True)
 
-def poot(wikiApi, wikiUsername, wikiPassword, patchName, diffFile):
+def poot(wikiApi, wikiUsername, wikiPassword, patchName, gitRepo):
 	wiki = wikitools.wiki.Wiki(wikiApi)
 	if wiki.login(wikiUsername, wikiPassword):
-		return pootDiff(wiki, patchName, open(diffFile, 'rb').read(-1))
+		return pootDiff(wiki, patchName, gitRepo)
 	else:
 		print 'Invalid wiki username/password.'
 
@@ -183,7 +224,7 @@ if __name__ == '__main__':
 	wikiUsername = raw_input('Poot Wiki username: ')
 	wikiPassword = raw_input('Poot Wiki password: ')
 	patchName = raw_input('Poot Wiki patch page title: ')
-	diffFile = raw_input('Poot path of file where diff outpoot is saved: ')
+	gitRepo = raw_input('Poot path of git repo: ')
 	print 'Pooting...'
-	poot(wikiApi, wikiUsername, wikiPassword, patchName, diffFile)
+	poot(wikiApi, wikiUsername, wikiPassword, patchName, gitRepo)
 	print 'Is gud.'
