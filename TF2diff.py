@@ -143,10 +143,6 @@ def returnEncoding(string):
 	encoding = chardet.detect(string)
 	return encoding['encoding']
 
-def gitDelete(filename):
-	""" Deletes file from Git repo. """
-	subprocess.call(r'del ' + "\"" + filename + "\"")
-
 try:
 	open('vice.exe')
 except IOError:
@@ -215,7 +211,10 @@ def checkForRemovedFiles(gcfname, gcfdir):
 	if len(missingfiles) != 0:
 		print '\nFiles removed from %s' % gcfname
 		for file in missingfiles:
-			gitDelete(file)
+			if os.path.isdir(file):
+				shutil.rmtree(file)
+			else:
+				os.remove(file)
 	else:
 		print '\nNo files removed from %s' % gcfname
 
