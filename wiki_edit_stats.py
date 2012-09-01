@@ -81,7 +81,7 @@ def return_table(userlist, timestart=None, recentedits=False):
 	n = 1
 	timenow = datetime.now()
 	for user in userlist:
-		username = user['name']
+		username = user['name'].encode('utf-8')
 		if recentedits:
 			usereditcount = user['editcountrecent']
 		else:
