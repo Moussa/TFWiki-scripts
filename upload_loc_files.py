@@ -3,11 +3,10 @@
 
 import re, os
 import wikitools
-import git
+import subprocess
 from uploadFile import *
 
-binaryFileRe = re.compile(r'^Binary files (.+) and (.+) differ')
-textFileRe = re.compile(r'^--- (.[^\n]+)\n\+\+\+ (.[^\n]+)\n(.+)', re.DOTALL)
+statusRe = re.compile(r'^(\w)\s+\"(.+)\"')
 
 content = r"""<!-- This page is updated by a bot. Changes made to it will likely be lost the next time it edits. -->
 == Recent changes ==
@@ -22,26 +21,14 @@ content = r"""<!-- This page is updated by a bot. Changes made to it will likely
 
 def update_lang_files(wikiUsername, wikiPassword, patchTitle, gitRepo, wikiAddress = r'http://wiki.tf2.com/w/', wikiApi = r'http://wiki.tf2.com/w/api.php'):
 	files = []
-	repo = git.Repo(gitRepo)
-	head_commit = repo.head.commit
-	diffs = head_commit.diff(create_patch = True)
-	for diff in diffs:
-		if re.search(binaryFileRe, diff.diff) is not None:
-			isBinary = True
-		else:
-			isBinary = False
-
-		if diff.a_mode and isBinary:
-			f = re.search(binaryFileRe, diff.diff).group(1)[2:].strip()
-		elif diff.a_mode and not isBinary:
-			f = re.search(textFileRe, diff.diff).group(1)[2:].strip()
-		elif diff.b_mode and isBinary:
-			f = re.search(binaryFileRe, diff.diff).group(2)[2:].strip()
-		elif diff.b_mode and not isBinary:
-			f = re.search(textFileRe, diff.diff).group(2)[2:].strip()
-		f = os.path.split(f)[1]
-		if f.startswith('tf_') and f.endswith('.txt'):
-			files.append(f)
+	p = subprocess.Popen(['git', 'status', '--short'], shell=True, stdout=subprocess.PIPE, cwd=gitRepo)
+	filesChanged, err = p.communicate()
+	filesChanged = filesChanged.strip().split('\n')
+	for file in filesChanged:
+		filename = re.search(statusRe, file).group(2)
+		filename = os.path.split(filename)[1]
+		if filename.startswith('tf_') and filename.endswith('.txt'):
+			files.append(filename)
 
 	uploader = wikiUpload.wikiUploader(wikiUsername, wikiPassword, wikiAddress)
 	wiki = wikitools.wiki.Wiki(wikiApi)
@@ -51,9 +38,8 @@ def update_lang_files(wikiUsername, wikiPassword, patchTitle, gitRepo, wikiAddre
 		n = 0
 		while n < 5 and not success:
 			try:
-				#uploader.upload(gitRepo + os.sep + r'team fortress 2 content.gcf\tf\resource' + os.sep + file, u'File:' + file, u'Uploaded new revision of %s for [[:%s]].' % (file, patchTitle), '', overwrite=True)
-				#wikitools.page.Page(wiki, u'File:' + file).edit(content % patchTitle, summary=u'Updated %s for [[:%s]].' % (file, patchTitle), minor=True, bot=True, skipmd5=True)
-				print 'uploading:', gitRepo + os.sep + r'team fortress 2 content.gcf\tf\resource' + os.sep + file
+				uploader.upload(gitRepo + os.sep + r'team fortress 2 content.gcf\tf\resource' + os.sep + file, u'File:' + file, u'Uploaded new revision of %s for [[:%s]].' % (file, patchTitle), '', overwrite=True)
+				wikitools.page.Page(wiki, u'File:' + file).edit(content % patchTitle, summary=u'Updated %s for [[:%s]].' % (file, patchTitle), minor=True, bot=True, skipmd5=True)
 				success = True
 			except:
 				n += 1
