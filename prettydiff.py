@@ -4,14 +4,15 @@
 
 import re
 import wikitools
-import git
+import subprocess
 
 lineMatch = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+),(\d+)\s*@@')
 lineMatch2 = re.compile(r'^@@\s*-(\d+)\s*\+(\d+),(\d+)\s*@@')
 lineMatch3 = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+)\s*@@')
 
-binaryFileRe = re.compile(r'^Binary files (.+) and (.+) differ')
-textFileRe = re.compile(r'^--- (.[^\n]+)\n\+\+\+ (.[^\n]+)\n(.+)', re.DOTALL)
+binaryFileRe = re.compile(r'Binary files (.+) and (.+) differ')
+textFileRe = re.compile(r'--- (.[^\n]+)\n\+\+\+ (.[^\n]+)\n(.+)', re.DOTALL)
+statusRe = re.compile(r'^(\w)\s+\"(.+)\"')
 
 def u(s):
 	if type(s) is type(u''):
@@ -38,36 +39,41 @@ def u(s):
 def pootDiff(wiki, patchName, gitRepo):
 	patchName = u(patchName)
 	files = []
-	repo = git.Repo(gitRepo)
-	head_commit = repo.head.commit
-	diffs = head_commit.diff(create_patch = True)
+	p = subprocess.Popen(['git', 'status', '--short'], shell=True, stdout=subprocess.PIPE, cwd=gitRepo)
+	filesChanged, err = p.communicate()
+	filesChanged = filesChanged.strip().split('\n')
 
-	for diff in diffs:
-		if re.search(binaryFileRe, diff.diff) is not None:
+	for file in filesChanged:
+		filename = re.search(statusRe, file).group(2)
+		status = re.search(statusRe, file).group(1)
+		print 'Processing:', filename
+
+		p = subprocess.Popen(['git', 'diff', '--cached', filename], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=gitRepo)
+		diff, err = p.communicate()
+		diff = u(diff)
+		if err != '' and status == u'D':
+			files.append({
+			'name': filename,
+			'contents': u'',
+			'isBinary': True,
+			'isNew': False,
+			'isDeleted': True
+		})
+			continue
+
+		if re.search(binaryFileRe, diff) is not None:
 			isBinary = True
 			contents = u''
 		else:
 			isBinary = False
-			contents = u(re.search(textFileRe, diff.diff).group(3)).strip()
-
-		if diff.a_mode and isBinary:
-			f = re.search(binaryFileRe, diff.diff).group(1)[2:].strip()
-		elif diff.a_mode and not isBinary:
-			f = re.search(textFileRe, diff.diff).group(1)[2:].strip()
-		elif diff.b_mode and isBinary:
-			f = re.search(binaryFileRe, diff.diff).group(2)[2:].strip()
-		elif diff.b_mode and not isBinary:
-			f = re.search(textFileRe, diff.diff).group(2)[2:].strip()
-		
-		isNew = diff.new_file
-		isDeleted = diff.deleted_file
+			contents = u(re.search(textFileRe, diff).group(3)).strip()
 
 		files.append({
-			'name': f,
+			'name': filename,
 			'contents': contents,
 			'isBinary': isBinary,
-			'isNew': isNew,
-			'isDeleted': isDeleted
+			'isNew': status == u'A',
+			'isDeleted': status == u'D'
 		})
 
 	def cmpFiles(left, right):
