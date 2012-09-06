@@ -242,8 +242,8 @@ for root, dirs, files in os.walk(TEMP_CONTENT_GCF_DIR):
 		elif f[-4:] == r'.ctx':
 			try:
 				fullpath = os.path.join(root, f)
-				return_code = subprocess.call('%svice.exe -d -x .ctx -k E2NcUkG2 %s' % (absPath(VICE_EXE_DIR), fullpath), stdout=subprocess.PIPE)
-				if return_code != 0:
+				std, err = subprocess.Popen('%svice.exe -d -x .ctx -k E2NcUkG2 %s' % (absPath(VICE_EXE_DIR), fullpath), stdout=subprocess.PIPE).communicate()
+				if err is not None:
 					print 'failed to decrypt', fullpath
 					sys.exit(1)
 				reEncode(fullpath)
