@@ -145,7 +145,7 @@ def returnEncoding(string):
 	return encoding['encoding']
 
 try:
-	open('vice.exe')
+	open(absPath(VICE_EXE_DIR) + os.sep + 'vice.exe')
 except IOError:
 	print 'Could not find vice.exe'
 	sys.exit(1)
