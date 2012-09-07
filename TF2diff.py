@@ -3,25 +3,26 @@ import os, subprocess, re, time, sys, shutil, urllib2, chardet
 from subprocess import Popen, PIPE
 from prettydiff import poot
 from upload_loc_files import update_lang_files
+from config import config
 
-# Poot user settings here
-GIT_DIR = r'' # Directory where git local repo exists
-TEMP_EXTRACT_DIR = r'' # Directory where files will be temporarily stored. (lots of writing/reading)
-GCFS_DIR = r'' # Directory where GCFs reside
+GIT_DIR = config['gitDir']
+TEMP_EXTRACT_DIR = config['tempExtractDir']
+GCFS_DIR = config['gcfsDir']
 
-HLEXTRACT_EXE_DIR = r'' # Location of HLExtract.exe (http://nemesis.thewavelength.net/index.php?p=35)
-VICE_EXE_DIR = r'' # Location of vice.exe for ctx file decryption (http://forums.alliedmods.net/attachment.php?attachmentid=25758&d=1208382645)
+HLEXTRACT_EXE_DIR = config['hlextractExeDir']
+VICE_EXE_DIR = config['viceExeDir']
 
-GIT_DIFF_OUTPUT_FILE = r'' # Location and name of file for git diff output
-WIKI_USERNAME = r'' # OTFWiki username
-WIKI_PASSWORD = r'' # OTFWiki password
+GIT_DIFF_OUTPUT_FILE = config['gitDiffOutputFile']
+
+WIKI_USERNAME = config['wikiUsername']
+WIKI_PASSWORD = config['wikiPassword']
 
 # Defined variables
 TEMP_CONTENT_GCF_DIR = TEMP_EXTRACT_DIR + os.sep + r'temp_content'
 TEMP_MATERIALS_GCF_DIR = TEMP_EXTRACT_DIR + os.sep + r'temp_materials'
 TEMP_CLIENTCONTENT_GCF_DIR = TEMP_EXTRACT_DIR + os.sep + r'temp_client_content'
 
-WIKI_API = r'http://wiki.tf2.com/w/api.php'
+WIKI_API = config['wikiApi']
 
 def absPath(path):
 	""" Returns correctly formatted absolute directory path. """
