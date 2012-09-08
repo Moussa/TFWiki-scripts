@@ -287,10 +287,16 @@ update_lang_files(WIKI_USERNAME, WIKI_PASSWORD, patch_page_title, GIT_DIR)
 print '\nCommiting to repo'
 
 if patch_notes_exist:
-	commit_message = patch_page_title + '\n' + returnPatchNotesURL() + '\n' + r'http://wiki.teamfortress.com/wiki/' + patch_page_title.replace(' ', '_')
+	commit_message1 = patch_page_title
+	commit_message2 = returnPatchNotesURL()
+	commit_message3 = r'http://wiki.teamfortress.com/wiki/' + patch_page_title.replace(' ', '_')
+	commit_message = ['-m', commit_message1, '-m', commit_message2, '-m', commit_message3]
 else:
-	commit_message = patch_page_title + '\n' + r'http://wiki.teamfortress.com/wiki/' + patch_page_title.replace(' ', '_')
-subprocess.Popen(['git', 'commit', '-m', commit_message], shell=True, cwd=GIT_DIR).communicate()
+	commit_message1 = patch_page_title
+	commit_message2 = r'http://wiki.teamfortress.com/wiki/' + patch_page_title.replace(' ', '_')
+	commit_message = ['-m', commit_message1, '-m', commit_message2]
+
+subprocess.Popen(['git', 'commit'] + commit_message, shell=True, cwd=GIT_DIR).communicate()
 
 # Push up to remote repo
 # Do stuff here
