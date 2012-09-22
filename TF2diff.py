@@ -166,19 +166,19 @@ else:
 
 if GAME == 'TF2':
 	answer = raw_input('Patch notes available? y\\n? ')
-	if answer in ['yes', 'y', 'yep']:
+	if answer.lower() in ['yes', 'y', 'yep']:
 		patch_notes_exist = True
-	elif answer in ['no', 'n', 'nope']:
+	elif answer.lower() in ['no', 'n', 'nope']:
 		patch_notes_exist = False
 	else:
 		print 'A simple yes/no would suffice thanks'
 		sys.exit(1)
 
 answer = raw_input('Second patch of the day? y\\n? ')
-if answer in ['yes', 'y', 'yep']:
-	patch_page_title += ' 2'
-elif answer in ['no', 'n', 'nope']:
-	pass
+if answer.lower() in ['yes', 'y', 'yep']:
+	n_patch = '2'
+elif answer.lower() in ['no', 'n', 'nope']:
+	n_patch = None
 else:
 	print 'A simple yes/no would suffice thanks'
 	sys.exit(1)
@@ -191,12 +191,16 @@ if GAME == 'TF2':
 	res = remove_zero_re.search(patch_page_title)
 	if res:
 		patch_page_title = r'{0} {1}, {2} Patch'.format(res.group(1), res.group(2), res.group(3))
+	if n_patch:
+		patch_page_title = patch_page_title.replace('Patch', 'Patch ' + n_patch)
 elif GAME == 'TF2 Beta':
 	patch_page_title = time.strftime("%B %d, %Y Patch (Beta)", time.localtime(timeInUS))
 	remove_zero_re = re.compile(r'(\w+) 0(\d), (\d+) Patch \(Beta\)')
 	res = remove_zero_re.search(patch_page_title)
 	if res:
 		patch_page_title = r'{0} {1}, {2} Patch (Beta)'.format(res.group(1), res.group(2), res.group(3))
+	if n_patch:
+		patch_page_title = patch_page_title.replace('Patch', 'Patch ' + n_patch)
 
 # Create temp directories
 if GAME == 'TF2':
