@@ -13,6 +13,7 @@ lineMatch3 = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+)\s*@@')
 binaryFileRe = re.compile(r'Binary files (.+) and (.+) differ')
 textFileRe = re.compile(r'--- (.[^\n]+)\n\+\+\+ (.[^\n]+)\n(.+)', re.DOTALL)
 statusRe = re.compile(r'^(\w)\s+\"(.+)\"')
+statusReRenamed = re.compile(r'^R\s+\"(.+)\"\s+->\s+\"(.+)\"')
 
 def u(s):
 	if type(s) is type(u''):
@@ -44,37 +45,58 @@ def pootDiff(wiki, patchName, gitRepo):
 	filesChanged = filesChanged.strip().split('\n')
 
 	for file in filesChanged:
-		filename = re.search(statusRe, file).group(2)
-		status = re.search(statusRe, file).group(1)
+		if re.search(statusReRenamed, file):
+			isRenamed = True
+			oldname = re.search(statusReRenamed, file).group(1)
+			newname = re.search(statusReRenamed, file).group(2)
+		else:
+			isRenamed = False
+			filename = re.search(statusRe, file).group(2)
+			status = re.search(statusRe, file).group(1)
+
 		print 'Processing:', filename
 
-		p = subprocess.Popen(['git', 'diff', '--cached', filename], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=gitRepo)
-		diff, err = p.communicate()
-		diff = u(diff)
-		if err != '' and status == u'D':
+		if isRenamed:
 			files.append({
-			'name': filename,
-			'contents': u'',
-			'isBinary': True,
-			'isNew': False,
-			'isDeleted': True
-		})
-			continue
-
-		if re.search(binaryFileRe, diff) is not None:
-			isBinary = True
-			contents = u''
+				'name': filename,
+				'contents': u'',
+				'isBinary': False,
+				'isNew': False,
+				'isDeleted': False,
+				'isRenamed': True,
+				'oldName': oldname,
+				'newName': newname
+			})
 		else:
-			isBinary = False
-			contents = u(re.search(textFileRe, diff).group(3)).strip()
+			p = subprocess.Popen(['git', 'diff', '--cached', filename], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=gitRepo)
+			diff, err = p.communicate()
+			diff = u(diff)
+			if err != '' and status == u'D':
+				files.append({
+				'name': filename,
+				'contents': u'',
+				'isBinary': True,
+				'isNew': False,
+				'isDeleted': True,
+				'isRenamed': False
+			})
+				continue
 
-		files.append({
-			'name': filename,
-			'contents': contents,
-			'isBinary': isBinary,
-			'isNew': status == u'A',
-			'isDeleted': status == u'D'
-		})
+			if re.search(binaryFileRe, diff) is not None:
+				isBinary = True
+				contents = u''
+			else:
+				isBinary = False
+				contents = u(re.search(textFileRe, diff).group(3)).strip()
+
+			files.append({
+				'name': filename,
+				'contents': contents,
+				'isBinary': isBinary,
+				'isNew': status == u'A',
+				'isDeleted': status == u'D',
+				'isRenamed': False
+			})
 
 	def cmpFiles(left, right):
 		c1 = cmp(left['isBinary'], right['isBinary'])
@@ -87,6 +109,10 @@ def pootDiff(wiki, patchName, gitRepo):
 		isDelete = f['isDeleted']
 		isAdd = f['isNew']
 		isBinary = f['isBinary']
+		isRenamed = f['isRenamed']
+		if isRenamed:
+			oldName = f['oldName']
+			newName = f['newName']
 		contents = []
 		lines = f['contents'].split(u'\n')
 
@@ -98,7 +124,7 @@ def pootDiff(wiki, patchName, gitRepo):
 		lineOld = -1
 		lineNew = -1
 
-		if not isBinary:
+		if not isBinary and not isRenamed:
 			for l in lines:
 				l = l.replace(u'\r', '').replace(u'\n', '')
 				lineRes = lineMatch.search(l)
@@ -139,12 +165,16 @@ def pootDiff(wiki, patchName, gitRepo):
 		if isDelete:
 			ret += u' diff-file-deleted'
 		ret += u'"><div class="'
-		if isBinary:
+		if isRenamed:
+			ret += u'diff-file-renamed'
+		elif isBinary:
 			ret += u'diff-name-binary'
 		else:
 			ret += u'diff-name-text'
 		ret += u'">'
-		if isAdd:
+		if isRenamed:
+			ret += u'Renamed'
+		elif isAdd:
 			ret += u'Added'
 		elif isDelete:
 			ret += u'Deleted'
@@ -152,8 +182,10 @@ def pootDiff(wiki, patchName, gitRepo):
 			ret += u'Modified'
 		ret += u': <span class="diff-name">'
 		subPageName = u'Template:PatchDiff/' + patchName + u'/' + f['name']
-		if not isBinary:
+		if not isBinary and not isRenamed:
 			ret += u'[[' + subPageName + u'|' + f['name'] + u']]'
+		elif isRenamed:
+			ret += '{0} -> {1}'.format(oldName, newName)
 		else:
 			ret += f['name']
 		ret += u'</span></div>'

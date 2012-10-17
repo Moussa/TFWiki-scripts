@@ -23,7 +23,7 @@ def populate_list(aufrom=None):
 	usersList += data
 	print 'User count:', str(len(usersList))
 	if 'query-continue' in result:
-		populate_list(aufrom=result['query-continue']['allusers']['aufrom'])
+		populate_list(aufrom=result['query-continue']['allusers']['aufrom'].encode('utf-8'))
 	else:
 		return 1
 
