@@ -60,7 +60,7 @@ def pootDiff(wiki, patchName, gitRepo):
 			files.append({
 				'name': filename,
 				'contents': u'',
-				'isBinary': False,
+				'isBinary': True,
 				'isNew': False,
 				'isDeleted': False,
 				'isRenamed': True,
