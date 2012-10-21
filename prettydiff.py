@@ -60,7 +60,7 @@ def pootDiff(wiki, patchName, gitRepo):
 			files.append({
 				'name': filename,
 				'contents': u'',
-				'isBinary': True,
+				'isBinary': False,
 				'isNew': False,
 				'isDeleted': False,
 				'isRenamed': True,
@@ -99,10 +99,27 @@ def pootDiff(wiki, patchName, gitRepo):
 			})
 
 	def cmpFiles(left, right):
-		c1 = cmp(left['isBinary'], right['isBinary'])
-		if c1:
-			return c1
-		return cmp(left['name'], right['name'])
+		if left['isRenamed']:
+			if right['isRenamed']:
+				return cmp(left['name'], right['name'])
+			if right['isBinary']:
+				return -1
+			if not right['isBinary']:
+				return 1
+		if left['isBinary']:
+			if right['isRenamed']:
+				return 1
+			if right['isBinary']:
+				return cmp(left['name'], right['name'])
+			if not right['isBinary']:
+				return 1
+		if not left['isBinary']:
+			if right['isRenamed']:
+				return -1
+			if right['isBinary']:
+				return -1
+			if not right['isBinary']:
+				return cmp(left['name'], right['name'])
 	files.sort(cmp=cmpFiles)
 
 	def formatFile(f):
