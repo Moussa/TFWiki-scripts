@@ -194,7 +194,7 @@ if GAME == 'TF2':
 	if n_patch:
 		patch_page_title = patch_page_title.replace('Patch', 'Patch ' + n_patch)
 elif GAME == 'TF2 Beta':
-	patch_page_title = time.strftime("%B %d, %Y Patch (Beta)", time.localtime(timeInUS))
+	patch_page_title = time.strftime("%B %d, %Y Patch (Beta)", time.localtime(time_in_US))
 	remove_zero_re = re.compile(r'(\w+) 0(\d), (\d+) Patch \(Beta\)')
 	res = remove_zero_re.search(patch_page_title)
 	if res:
