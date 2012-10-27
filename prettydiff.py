@@ -265,7 +265,13 @@ def pootDiff(wiki, patchName, gitRepo):
 		patchDiff += d
 		print d
 	print 'Editing patch diff page:', u'Template:PatchDiff/' + patchName
-	wikitools.page.Page(wiki, u'Template:PatchDiff/' + patchName).edit(patchDiff, summary=u'Diff of patch [[:' + patchName + u']].', minor=True, bot=True)
+	success = False
+	while not success:
+		try:
+			wikitools.page.Page(wiki, u'Template:PatchDiff/' + patchName).edit(patchDiff, summary=u'Diff of patch [[:' + patchName + u']].', minor=True, bot=True)
+			success = True
+		except:
+			print 'Failed to edit, retrying'
 
 def poot(wikiApi, wikiUsername, wikiPassword, patchName, gitRepo):
 	wiki = wikitools.wiki.Wiki(wikiApi)
