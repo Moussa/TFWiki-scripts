@@ -5,6 +5,7 @@
 import re
 import wikitools
 import subprocess
+import getpass
 
 lineMatch = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+),(\d+)\s*@@')
 lineMatch2 = re.compile(r'^@@\s*-(\d+)\s*\+(\d+),(\d+)\s*@@')
@@ -16,25 +17,25 @@ statusRe = re.compile(r'^(\w)\s+\"(.+)\"')
 statusReRenamed = re.compile(r'^R\s+\"(.+)\"\s+->\s+\"(.+)\"')
 
 def u(s):
-	if type(s) is type(u''):
+	if isinstance(s, unicode):
 		return s
-	if type(s) is type(''):
+	if isinstance(s, str):
 		try:
 			return unicode(s)
-		except:
+		except Exception:
 			try:
 				return unicode(s.decode('utf8'))
-			except:
+			except Exception:
 				try:
 					return unicode(s.decode('windows-1252'))
-				except:
+				except Exception:
 					return unicode(s, errors='ignore')
 	try:
 		return unicode(s)
-	except:
+	except Exception:
 		try:
 			return u(str(s))
-		except:
+		except Exception:
 			return s
 
 def pootDiff(wiki, patchName, gitRepo):
@@ -283,7 +284,7 @@ def poot(wikiApi, wikiUsername, wikiPassword, patchName, gitRepo):
 if __name__ == '__main__':
 	wikiApi = raw_input('Poot Wiki API URL: ')
 	wikiUsername = raw_input('Poot Wiki username: ')
-	wikiPassword = raw_input('Poot Wiki password: ')
+	wikiPassword = getpass.getpass('Poot Wiki password: ')
 	patchName = raw_input('Poot Wiki patch page title: ')
 	gitRepo = raw_input('Poot path of git repo: ')
 	print 'Pooting...'
