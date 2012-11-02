@@ -4,6 +4,7 @@
 import re, os
 import wikitools
 import subprocess
+import getpass
 from uploadFile import *
 
 statusRe = re.compile(r'^(\w)\s+\"(.+)\"')
@@ -41,14 +42,14 @@ def update_lang_files(wikiUsername, wikiPassword, patchTitle, gitRepo, wikiAddre
 				uploader.upload(gitRepo + os.sep + r'team fortress 2 content.gcf\tf\resource' + os.sep + file, u'File:' + file, u'Uploaded new revision of %s for [[:%s]].' % (file, patchTitle), '', overwrite=True)
 				wikitools.page.Page(wiki, u'File:' + file).edit(content % patchTitle, summary=u'Updated %s for [[:%s]].' % (file, patchTitle), minor=True, bot=True, skipmd5=True)
 				success = True
-			except:
+			except Exception:
 				n += 1
 		if not success:
 			print 'Could not upload', file
 
 if __name__ == '__main__':
 	wikiUsername = raw_input('Poot Wiki username: ')
-	wikiPassword = raw_input('Poot Wiki password: ')
+	wikiPassword = getpass.getpass('Poot Wiki password: ')
 	patchTitle = raw_input('Poot Wiki patch page title: ')
 	gitRepo = raw_input('Poot path of git repo: ')
 	print 'Pooting...'
