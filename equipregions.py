@@ -33,6 +33,16 @@ for item in allitems:
 				region = 'medal'
 			elif item['prefab'] == 'zombie':
 				region = 'zombie_body'
+			elif item['prefab'] == 'grenades':
+				region = 'grenades'
+			elif item['prefab'] == 'mask':
+				region = 'head_skin'
+			elif item['prefab'] == 'beard':
+				region = 'beard'
+			elif item['prefab'] == 'backpack':
+				region = 'back'
+			elif item['prefab'] == 'pyrovision_goggles':
+				region = 'glasses'
 			else:
 				print 'Prefab', item['prefab'], 'has unknown region'
 				continue
