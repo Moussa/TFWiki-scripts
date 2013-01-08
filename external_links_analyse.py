@@ -51,22 +51,6 @@ def strip_slashes(url):
 		return url[:-1]
 	return url
 
-def get_ignorelist():
-	try:
-		text = wikitools.Page(wiki, IGNORE_LIST).getWikiText()
-	except Exception:
-		self.log.add('Could not read ignore list')
-		return []
-	self.log.add('Fetched ignore list')
-
-	listRE = re.compile(r'== URLs ==\n(.+)', re.DOTALL)
-	text = listRE.search(text).group(1)
-
-	urlRE = re.compile(r'\*\s*(.+)')
-	urls = urlRE.findall(text)
-
-	return [strip_slashes(url) for url in urls]
-
 class Log(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
@@ -353,12 +337,12 @@ class WeblinkCheckerRobot:
 	def __init__(self, pool, pages):
 		self.pool = pool
 		self.pages = pages
-		self.ignorelist = get_ignorelist()
 		self.links = []
 		self.data = {}
 		self.suspicious = {}
 		self.log = Log()
 		self.lock = threading.Lock()
+		self.ignorelist = self.get_ignorelist()
 
 	def return_link_regex(self, withoutBracketed=False, onlyBracketed=False):
 		"""Return a regex that matches external links."""
@@ -368,7 +352,7 @@ class WeblinkCheckerRobot:
 		# Note: While allowing dots inside URLs, MediaWiki will regard
 		# dots at the end of the URL as not part of that URL.
 		# The same applies to comma, colon and some other characters.
-		notAtEnd = '\]\s\.:;,<>"\|\)'
+		notAtEnd = '\]\s\.:;,<>"\|)'
 		# So characters inside the URL can be anything except whitespace,
 		# closing squared brackets, quotation marks, greater than and less
 		# than, and the last character also can't be parenthesis or another
@@ -401,6 +385,22 @@ class WeblinkCheckerRobot:
 
 		for m in regex.finditer(text):
 			yield m.group('url')
+
+	def get_ignorelist(self):
+		try:
+			text = wikitools.Page(wiki, IGNORE_LIST).getWikiText()
+		except Exception:
+			self.log.add('Could not read ignore list')
+			return []
+		self.log.add('Fetched ignore list')
+
+		listRE = re.compile(r'== URLs ==\n(.+)', re.DOTALL)
+		text = listRE.search(text).group(1)
+
+		urlRE = re.compile(r'\*\s*(.+)')
+		urls = urlRE.findall(text)
+
+		return [strip_slashes(url) for url in urls]
 
 	def is_suspicious_link(self, url):
 		s_urls = ['wiki.tf2.com', 'wiki.teamfortress.com', 'wiki.tf', 'pastie', 'paste']
