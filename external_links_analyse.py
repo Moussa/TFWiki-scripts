@@ -12,6 +12,7 @@ from Queue import Queue
 USERNAME = ''
 PASSWORD = ''
 WIKI_API = r'http://wiki.tf2.com/w/api.php'
+OUTPUT_PAGE = r''
 IGNORE_LIST = r''
 NUM_THREADS = 50
 
@@ -469,7 +470,7 @@ def is_image(url):
 		return True
 	return False
 
-def write_to_file(data, suspicious):
+def save(data, suspicious):
 	f = open('deadlinks.txt', 'wb')
 
 	output = '== Dead or incorrectly behaving links ==\n'
@@ -489,6 +490,8 @@ def write_to_file(data, suspicious):
 	f.write(output)
 	f.close()
 
+	wikitools.Page(wiki, OUTPUT_PAGE).edit(output, summary=u'Updated', minor=True, bot=False, skipmd5=True, createonly=False, timeout=60)
+
 def run():
 	pages = get_all_articles()
 	pool = ThreadPool(NUM_THREADS)
@@ -497,7 +500,7 @@ def run():
 	pool.wait_completion()
 
 	data, suspicious = linkbot.return_data()
-	write_to_file(data, suspicious)
+	save(data, suspicious)
 
 
 if __name__ == '__main__':
