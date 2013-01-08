@@ -12,6 +12,7 @@ from Queue import Queue
 USERNAME = ''
 PASSWORD = ''
 WIKI_API = r'http://wiki.tf2.com/w/api.php'
+IGNORE_LIST = r''
 NUM_THREADS = 50
 
 wiki = wikitools.Wiki(WIKI_API)
@@ -43,6 +44,27 @@ def get_all_articles():
 	output = [ page['title'] for page in res['query']['allpages'] if is_good_title(page['title']) ]
 
 	return output
+
+def strip_slashes(url):
+	if url.endswith('/') or url.endswith('\\'):
+		return url[:-1]
+	return url
+
+def get_ignorelist():
+	try:
+		text = wikitools.Page(wiki, IGNORE_LIST).getWikiText()
+	except Exception:
+		self.log.add('Could not read ignore list')
+		return []
+	self.log.add('Fetched ignore list')
+
+	listRE = re.compile(r'== URLs ==\n(.+)', re.DOTALL)
+	text = listRE.search(text).group(1)
+
+	urlRE = re.compile(r'\*\s*(.+)')
+	urls = urlRE.findall(text)
+
+	return [strip_slashes(url) for url in urls]
 
 class Log(threading.Thread):
 	def __init__(self):
@@ -121,9 +143,9 @@ class LinkChecker(object):
 
 	def get_connection(self):
 		if self.scheme == 'http':
-			return httplib.HTTPConnection(self.host, timeout=20)
+			return httplib.HTTPConnection(self.host, timeout=30)
 		elif self.scheme == 'https':
-			return httplib.HTTPSConnection(self.host, timeout=20)
+			return httplib.HTTPSConnection(self.host, timeout=30)
 
 	def get_encoding_used_by_server(self):
 		if not self.serverEncoding:
@@ -330,6 +352,7 @@ class WeblinkCheckerRobot:
 	def __init__(self, pool, pages):
 		self.pool = pool
 		self.pages = pages
+		self.ignorelist = get_ignorelist()
 		self.links = []
 		self.data = {}
 		self.suspicious = {}
@@ -410,7 +433,7 @@ class WeblinkCheckerRobot:
 			if url in self.suspicious:
 				self.suspicious[url]['pages'] += [page]
 			else:
-				self.suspicious[url] = [page]
+				self.suspicious[url] = {'pages': [page]}
 			lock.release()
 			return None
 
@@ -432,22 +455,34 @@ class WeblinkCheckerRobot:
 		linkRegex = self.return_link_regex()
 
 		for url in self.get_links(linkRegex, text):
-			self.pool.add_task(self.check_url, page, url, self.lock)
+			if strip_slashes(url) in self.ignorelist:
+				self.log.add('url in ignore list: ' + url)
+			else:
+				self.pool.add_task(self.check_url, page, url, self.lock)
 
 	def return_data(self):
 		return self.data, self.suspicious
 
+def is_image(url):
+	imageRE = re.compile(r".(jpg|jpeg|png|gif)$")
+	if imageRE.match(url):
+		return True
+	return False
+
 def write_to_file(data, suspicious):
 	f = open('deadlinks.txt', 'wb')
 
-	output = '== Dead or incorrectly behaving links =='
+	output = '== Dead or incorrectly behaving links ==\n'
 	for url in data:
 		output += '* {0} ({1})\n'.format(url, data[url]['message'])
 		for page in data[url]['pages']:
 			output += '** [[{0}]]\n'.format(page.encode('utf-8'))
-	output += '== Suspicious links =='
+	output += '\n== Suspicious links ==\n'
 	for url in suspicious:
-		output += '* {0}\n'.format(url)
+		if is_image(url):
+			output += '* [{0}]\n'.format(url)
+		else:
+			output += '* {0}\n'.format(url)
 		for page in suspicious[url]['pages']:
 			output += '** [[{0}]]\n'.format(page.encode('utf-8'))
 
