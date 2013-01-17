@@ -54,7 +54,7 @@ class KillerThread(threading.Thread):
 			xchat.prnt('Error: username was not supplied')
 			return
 
-		username = word[1]
+		username = word_eol[1]
 		user = wikitools.User(wiki, username)
 		if not user.isBlocked():
 			block_user(user)
