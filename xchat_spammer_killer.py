@@ -35,7 +35,7 @@ def get_created_pages(contribs):
 	titles = []
 	for edit in contribs:
 		if u'new' in edit:
-			titles.append[edit['title']]
+			titles.append(edit['title'])
 	return titles
 
 def delete_pages(pages):
