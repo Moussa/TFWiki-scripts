@@ -52,7 +52,10 @@ class KillerThread(threading.Thread):
 
 	def delete_pages(self, pages):
 		for page in pages:
-			wikitools.Page(self.wiki, page).delete('Spam')
+			try:
+				wikitools.Page(self.wiki, page).delete('Spam')
+			except:
+				xchat.prnt('Error: page no longer exists')
 
 	def is_old_user(self, user):
 		now = datetime.datetime.now(pytz.utc)
