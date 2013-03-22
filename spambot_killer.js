@@ -386,6 +386,7 @@ function keel(user){
         if (new Date().getTime() - regdate < 86400000){
             blockUser(user);
             killContribs(user);
+            alert('User:' + user + ' has been terminated. Good day');
         }
         else{
             alert('Nope.avi - User:' + user + ' has existed for more than 1 day.');
@@ -398,7 +399,6 @@ function pootSecretSauce(){
     $("#secretsauce").click(function(){
         var user = $('.firstrevisionheader .mw-userlink').attr('title').replace('User:', '');
         keel(user);
-        alert('User:' + user + ' has been terminated. Good day');
     });
 }
 addOnloadHook(pootSecretSauce);
