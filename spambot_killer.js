@@ -395,8 +395,8 @@ function keel(user){
 }
 
 function pootSecretSauce(){
-    $('.firstrevisionheader .mw-usertoollinks').append(' <a href="#" id="secretsauce">secretsauce</a>');
-    $("#secretsauce").click(function(){
+    $('.firstrevisionheader .mw-usertoollinks a:last-child').after(" | <a href=# id='blockdelete'>blockdelete</a>")
+    $("#blockdelete").click(function(){
         var user = $('.firstrevisionheader .mw-userlink').attr('title').replace('User:', '');
         keel(user);
     });
