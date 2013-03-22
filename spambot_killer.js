@@ -345,13 +345,17 @@ JsMwApi.prototype.page = function (title) {
 }
 
 //// START SPAMBOT KILLER ///
+
+// create JsMwApi object for wiki queries
 var nearbyApi = JsMwApi("/w/api.php");
 
 function deletePage(title){
+    // query to get deletetoken
     nearbyApi({action: "query", prop: "info", intoken: 'delete', titles: title}, function (res){
         for (var key in res.query.pages){
             var title = res.query.pages[key].title
             var deletetoken = res.query.pages[key].deletetoken;
+            // use deletetoken in POST request to delete page
             nearbyApi({action: "delete", title: title, reason: 'Spam', token: deletetoken}, function (res){ 
                 console.log('Deleted ' + title);
             });
@@ -360,8 +364,10 @@ function deletePage(title){
 }
 
 function killContribs(user){
+    // query to get the users contributions
     nearbyApi({action: "query", list: "usercontribs", ucuser: user}, function (res){
         for(var edit in res.query.usercontribs){
+            // only delete contribution if new page
             if ('new' in res.query.usercontribs[edit]){
                 deletePage(res.query.usercontribs[edit].title);
             }
@@ -370,8 +376,10 @@ function killContribs(user){
 }
 
 function blockUser(user){
+    // query to get blocktoken
     nearbyApi({action: "query", prop: "info", intoken: 'block', titles: 'User:' + user}, function (res){
         for (var key in res.query.pages){
+            // use blocktoken in POST request to block user
             var blocktoken = res.query.pages[key].blocktoken;
             nearbyApi({action: "block", user: user, expiry: 'never', nocreate: '', autoblock: '', reason: 'Spamming links to external sites', token: deletetoken}, function (res){ 
                 console.log('Blocked ' + user);
@@ -381,11 +389,16 @@ function blockUser(user){
 }
 
 function keel(user){
-    nearbyApi({action: "query", list: "users", ususers: user, usprop: "registration"}, function (res){ 
+    // query user details
+    nearbyApi({action: "query", list: "users", ususers: user, usprop: "registration"}, function (res){
+        // check if user registered less than 6 hours ago
+        // to prevent accidently terminating safe users
         var regdate = Date.parse(res.query.users[0].registration);
         if (new Date().getTime() - regdate < 21600000){
+            // hit it doc
             blockUser(user);
             killContribs(user);
+            // vas gud
             alert('User:' + user + ' has been terminated. Good day');
         }
         else{
@@ -395,9 +408,12 @@ function keel(user){
 }
 
 function pootSecretSauce(){
+    // insert blockdelete link in new page revision details
     $('.firstrevisionheader .mw-usertoollinks a:last-child').after(" | <a href=# id='blockdelete'>blockdelete</a>")
     $("#blockdelete").click(function(){
+        // grab username from revision details
         var user = $('.firstrevisionheader .mw-userlink').attr('title').replace('User:', '');
+
         keel(user);
     });
 }
