@@ -381,7 +381,7 @@ function blockUser(user){
         for (var key in res.query.pages){
             // use blocktoken in POST request to block user
             var blocktoken = res.query.pages[key].blocktoken;
-            nearbyApi({action: "block", user: user, expiry: 'never', nocreate: '', autoblock: '', reason: 'Spamming links to external sites', token: deletetoken}, function (res){ 
+            nearbyApi({action: "block", user: user, expiry: 'never', nocreate: '', autoblock: '', reason: 'Spamming links to external sites', token: blocktoken}, function (res){ 
                 console.log('Blocked ' + user);
             });
         }
