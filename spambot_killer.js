@@ -402,7 +402,7 @@ function keel(user){
             alert('User:' + user + ' has been terminated. Good day');
         }
         else{
-            alert('Nope.avi - User:' + user + ' has existed for more than 1 day.');
+            alert('Nope.avi - User:' + user + ' is more than 6 hours old');
         }
     });
 }
