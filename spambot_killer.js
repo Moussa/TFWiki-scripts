@@ -344,7 +344,7 @@ JsMwApi.prototype.page = function (title) {
     return call_with_page;
 }
 
-### START SPAMBOT KILLER ###
+//// START SPAMBOT KILLER ///
 var nearbyApi = JsMwApi("/w/api.php");
 
 function deletePage(title){
@@ -402,4 +402,4 @@ function pootSecretSauce(){
     });
 }
 addOnloadHook(pootSecretSauce);
-### END SPAMBOT KILLER ###
+/// END SPAMBOT KILLER ///
