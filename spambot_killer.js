@@ -383,7 +383,7 @@ function blockUser(user){
 function keel(user){
     nearbyApi({action: "query", list: "users", ususers: user, usprop: "registration"}, function (res){ 
         var regdate = Date.parse(res.query.users[0].registration);
-        if (new Date().getTime() - regdate < 86400000){
+        if (new Date().getTime() - regdate < 21600000){
             blockUser(user);
             killContribs(user);
             alert('User:' + user + ' has been terminated. Good day');
