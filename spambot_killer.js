@@ -352,11 +352,12 @@ var nearbyApi = JsMwApi("/w/api.php");
 function deletePage(title){
     // query to get deletetoken
     nearbyApi({action: "query", prop: "info", intoken: 'delete', titles: title}, function (res){
+        console.log('LOG: deletetokenres=' + res);
         for (var key in res.query.pages){
             var deletetoken = res.query.pages[key].deletetoken;
             // use deletetoken in POST request to delete page
             nearbyApi({action: "delete", title: title, reason: 'Spam', token: deletetoken}, function (res){ 
-                console.log('Deleted ' + title);
+                console.log('LOG: deleted=' + title);
             });
         }
     });
@@ -365,9 +366,11 @@ function deletePage(title){
 function killContribs(user){
     // query to get the users contributions
     nearbyApi({action: "query", list: "usercontribs", ucuser: user}, function (res){
+        console.log('LOG: usercontribs=' + res);
         for(var edit in res.query.usercontribs){
             // only delete contribution if new page
             if ('new' in res.query.usercontribs[edit]){
+                console.log('LOG: usercontribtodelete=' + res.query.usercontribs[edit]);
                 deletePage(res.query.usercontribs[edit].title);
             }
         }
@@ -377,11 +380,13 @@ function killContribs(user){
 function blockUser(user){
     // query to get blocktoken
     nearbyApi({action: "query", prop: "info", intoken: 'block', titles: 'User:' + user}, function (res){
-        for (var key in res.query.pages){
+        console.log('LOG: blocktokenres=' + res);
+        for (key in res.query.pages){
             // use blocktoken in POST request to block user
             var blocktoken = res.query.pages[key].blocktoken;
+            console.log('LOG: blocktoken=' + blocktoken);
             nearbyApi({action: "block", user: user, expiry: 'never', nocreate: '', autoblock: '', reason: 'Spamming links to external sites', token: blocktoken}, function (res){ 
-                console.log('Blocked ' + user);
+                console.log('LOG: blocked=' + user);
             });
         }
     });
@@ -393,6 +398,7 @@ function keel(user){
         // check if user registered less than 6 hours ago
         // to prevent accidently terminating safe users
         var regdate = Date.parse(res.query.users[0].registration);
+        console.log('LOG: regdate=' + regdate);
         if (new Date().getTime() - regdate < 21600000){
             // hit it doc
             blockUser(user);
@@ -412,6 +418,7 @@ function pootSecretSauce(){
     $("#blockdelete").click(function(){
         // grab username from revision details
         var user = $('.firstrevisionheader .mw-userlink').attr('title').replace('User:', '');
+        console.log('LOG: User=' + user);
 
         keel(user);
     });
