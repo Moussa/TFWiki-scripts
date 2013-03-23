@@ -353,7 +353,6 @@ function deletePage(title){
     // query to get deletetoken
     nearbyApi({action: "query", prop: "info", intoken: 'delete', titles: title}, function (res){
         for (var key in res.query.pages){
-            var title = res.query.pages[key].title
             var deletetoken = res.query.pages[key].deletetoken;
             // use deletetoken in POST request to delete page
             nearbyApi({action: "delete", title: title, reason: 'Spam', token: deletetoken}, function (res){ 
