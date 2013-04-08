@@ -392,14 +392,6 @@ function blockUser(user){
     });
 }
 
-function keelProceed(user){
-    // hit it doc
-    blockUser(user);
-    killContribs(user);
-    // vas gud
-    alert('User:' + user + ' has been terminated. Good day');
-}
-
 function keel(user){
     // query user details
     nearbyApi({action: "query", list: "users", ususers: user, usprop: "registration"}, function (res){
@@ -408,10 +400,14 @@ function keel(user){
         var regdate = Date.parse(res.query.users[0].registration);
         console.log('LOG: regdate=' + regdate);
         if (new Date().getTime() - regdate < 43200000){
-            keelProceed(user);
+            // hit it doc
+            blockUser(user);
+            killContribs(user);
+            // vas gud
+            alert('User:' + user + ' has been terminated. Good day');
         }
-        else if (confirm('User:' + user + ' is more than 12 hours old. Are you sure you want to blockdelete?')) {
-            keelProceed(user);
+        else{
+            alert('Nope.avi - User:' + user + ' is more than 6 hours old');
         }
     });
 }
@@ -421,7 +417,7 @@ function pootSecretSauce(){
     $('.firstrevisionheader .mw-usertoollinks a:last-child').after(" | <a href=# id='blockdelete'>blockdelete</a>")
     $("#blockdelete").click(function(){
         // grab username from revision details
-        var user = $('.firstrevisionheader .mw-userlink').text();
+        var user = $('.firstrevisionheader .mw-userlink').attr('title').replace('User:', '');
         console.log('LOG: User=' + user);
 
         keel(user);
