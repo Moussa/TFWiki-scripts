@@ -407,7 +407,7 @@ function keel(user){
             alert('User:' + user + ' has been terminated. Good day');
         }
         else{
-            alert('Nope.avi - User:' + user + ' is more than 6 hours old');
+            alert('Nope.avi - User:' + user + ' is more than 12 hours old');
         }
     });
 }
