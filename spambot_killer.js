@@ -367,12 +367,19 @@ function killContribs(user){
     // query to get the users contributions
     nearbyApi({action: "query", list: "usercontribs", ucuser: user}, function (res){
         console.log('LOG: usercontribs=' + res);
-        for(var edit in res.query.usercontribs){
-            // only delete contribution if new page
-            if ('new' in res.query.usercontribs[edit]){
-                console.log('LOG: usercontribtodelete=' + res.query.usercontribs[edit]);
-                deletePage(res.query.usercontribs[edit].title);
+        if (res.query.usercontribs.length > 5){
+            alert('User:' + user + ' has more than 5 edits');
+        }
+        else{
+            for(var edit in res.query.usercontribs){
+                // only delete contribution if new page
+                if ('new' in res.query.usercontribs[edit]){
+                    console.log('LOG: usercontribtodelete=' + res.query.usercontribs[edit]);
+                    deletePage(res.query.usercontribs[edit].title);
+                }
             }
+            // vas gud
+            alert('User:' + user + ' has been terminated. Good day');
         }
     });
 }
@@ -395,20 +402,9 @@ function blockUser(user){
 function keel(user){
     // query user details
     nearbyApi({action: "query", list: "users", ususers: user, usprop: "registration"}, function (res){
-        // check if user registered less than 6 hours ago
-        // to prevent accidently terminating safe users
-        var regdate = Date.parse(res.query.users[0].registration);
-        console.log('LOG: regdate=' + regdate);
-        if (new Date().getTime() - regdate < 43200000){
-            // hit it doc
-            blockUser(user);
-            killContribs(user);
-            // vas gud
-            alert('User:' + user + ' has been terminated. Good day');
-        }
-        else{
-            alert('Nope.avi - User:' + user + ' is more than 12 hours old');
-        }
+        // hit it doc
+        blockUser(user);
+        killContribs(user);
     });
 }
 
