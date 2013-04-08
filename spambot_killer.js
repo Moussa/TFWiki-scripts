@@ -392,6 +392,14 @@ function blockUser(user){
     });
 }
 
+function keelProceed(user){
+    // hit it doc
+    blockUser(user);
+    killContribs(user);
+    // vas gud
+    alert('User:' + user + ' has been terminated. Good day');
+}
+
 function keel(user){
     // query user details
     nearbyApi({action: "query", list: "users", ususers: user, usprop: "registration"}, function (res){
@@ -399,15 +407,11 @@ function keel(user){
         // to prevent accidently terminating safe users
         var regdate = Date.parse(res.query.users[0].registration);
         console.log('LOG: regdate=' + regdate);
-        if (new Date().getTime() - regdate < 21600000){
-            // hit it doc
-            blockUser(user);
-            killContribs(user);
-            // vas gud
-            alert('User:' + user + ' has been terminated. Good day');
+        if (new Date().getTime() - regdate < 43200000){
+            keelProceed(user);
         }
-        else{
-            alert('Nope.avi - User:' + user + ' is more than 6 hours old');
+        else if (confirm('User:' + user + ' is more than 12 hours old. Are you sure you want to blockdelete?')) {
+            keelProceed(user);
         }
     });
 }
