@@ -6,6 +6,7 @@ SCRIPTS_LOCATION = r'F:\Steam\steamapps\common\portal 2\portal2\resource'
 
 tokenRE = re.compile(r'\"(?P<token>.[^\"]+)\"[\t\s]+\"(?P<transstring>.[^\"]+)\"[\n\r][\s\t]*\"\[english\](?P=token)\"[\t\s]+\"(?P<origstring>.[^\"]+)\"', re.DOTALL)
 lineWithCaptionRE = re.compile(r'(\<.[^>]+\>){1,2}([\w\d\s]+:\s)?(?P<line>.+)', re.DOTALL)
+escapeCharRE = re.compile(r"\||\*|''+|\[\[+")
 
 portal2scripts = {
 	'cz': 'subtitles_czech.txt',
@@ -53,7 +54,12 @@ def clean_string(string):
 	else:
 		clean_string = string.strip()
 
-	return clean_string
+	return escape_string(clean_string)
+
+def escape_string(string):
+	if escapeCharRE.search(string):
+		return '<nowiki>{0}</nowiki>'.format(string)
+	return string
 
 trans_dict = {}
 for lang in portal2scripts:
