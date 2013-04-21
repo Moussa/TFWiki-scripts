@@ -84,7 +84,11 @@ for token in sorted(trans_dict.keys()):
 	strings = trans_dict[token]
 
 	dictionary_entry = '\n\n{filename}:'.format(character=character.lower(), filename=filename)
-	for lang in sorted(strings.keys()):
+	dictionary_entry += '\n  en: {string}'.format(string=clean_string(strings['en']))
+
+	langs = strings.keys()
+	langs.remove('en')
+	for lang in sorted(langs):
 		dictionary_entry += '\n  {lang}: {string}'.format(lang=lang, string=clean_string(strings[lang]))
 
 	output[character] = output.get(character, '') + dictionary_entry
