@@ -6,7 +6,7 @@ SCRIPTS_LOCATION = r'F:\Steam\steamapps\common\portal 2\portal2\resource'
 
 tokenRE = re.compile(r'\"(?P<token>.[^\"]+)\"[\t\s]+\"(?P<transstring>.[^\"]+)\"[\n\r][\s\t]*\"\[english\](?P=token)\"[\t\s]+\"(?P<origstring>.[^\"]+)\"', re.DOTALL)
 lineWithCaptionRE = re.compile(r'(\<.[^>]+\>){1,2}([\w\d\s]+:\s)?(?P<line>.+)', re.DOTALL)
-escapeCharRE = re.compile(r"\||\*|''+|\[\[+")
+escapeCharRE = re.compile(r"\||\*|''+|\[\[+|~")
 
 portal2scripts = {
 	'cz': 'subtitles_czech.txt',
@@ -83,7 +83,7 @@ for token in sorted(trans_dict.keys()):
 	filename = filename.replace('_', ' ').lower()
 	strings = trans_dict[token]
 
-	dictionary_entry = '\n\n{character} {filename}.wav:'.format(character=character.lower(), filename=filename)
+	dictionary_entry = '\n\n{filename}:'.format(character=character.lower(), filename=filename)
 	for lang in sorted(strings.keys()):
 		dictionary_entry += '\n  {lang}: {string}'.format(lang=lang, string=clean_string(strings[lang]))
 
