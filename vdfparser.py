@@ -61,6 +61,10 @@ class VDF:
 		""" Returns the entire items dict. """
 		return self.finalParsed[1]['items']
 
+	def get_prefabs(self):
+		""" Returns the entire prefabs dict. """
+		return self.finalParsed[1]['prefabs']
+
 	def get_item(self, key, value, allmatches=False):
 		""" Returns the item dict that matches the
 			given key and value.

@@ -4,12 +4,15 @@
 from vdfparser import VDF
 
 schema = VDF()
-allitems = schema.get_items()
+items = schema.get_items()
+prefabs = schema.get_prefabs()
+allitems =  dict(items, **prefabs)
 regionsDict = {}
 
 def add_region(itemname, region):
 	if region in regionsDict:
-		regionsDict[region].append(itemname)
+		if itemname not in regionsDict[region]:
+			regionsDict[region].append(itemname)
 	else:
 		regionsDict[region] = [itemname]
 		print 'Added region', region
@@ -17,7 +20,7 @@ def add_region(itemname, region):
 for item in allitems:
 	item = allitems[item]
 	if 'item_name' in item:
-		print 'Processing', item['name']
+		print 'Processing', item['item_name']
 		itemname = schema.get_localized_item_name(item['item_name'])
 		if 'equip_region' in item:
 			region = item['equip_region']
