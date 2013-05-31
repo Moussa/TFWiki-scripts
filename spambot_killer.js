@@ -410,7 +410,7 @@ function keel(user){
 
 function pootSecretSauce(){
     // insert blockdelete link in new page revision details
-    $('.firstrevisionheader .mw-usertoollinks a:last-child').after(" | <a href=# id='blockdelete'>blockdelete</a>")
+    $('.mw-usertoollinks a:last-child').after(" | <a href=# id='blockdelete'>blockdelete</a>")
     $("#blockdelete").click(function(){
         // grab username from revision details
         var user = $('.firstrevisionheader .mw-userlink').text();
