@@ -413,7 +413,7 @@ function pootSecretSauce(){
     $('.mw-usertoollinks a:last-child').after(" | <a href=# id='blockdelete'>blockdelete</a>")
     $("#blockdelete").click(function(){
         // grab username from revision details
-        var user = $('.firstrevisionheader .mw-userlink').text();
+        var user = $('.mw-userlink').text();
         console.log('LOG: User=' + user);
 
         keel(user);
