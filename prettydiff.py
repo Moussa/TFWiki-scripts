@@ -89,7 +89,10 @@ def pootDiff(wiki, patchName, gitRepo):
 				contents = u''
 			else:
 				isBinary = False
-				contents = u(re.search(textFileRe, diff).group(3).encode('utf-8')).strip()
+				if 'new file mode 100644' not in diff:
+					contents = u(re.search(textFileRe, diff).group(3).encode('utf-8')).strip()
+				else:
+					contents = u''
 
 			files.append({
 				'name': filename,
