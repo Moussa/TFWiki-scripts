@@ -15,6 +15,7 @@ function AddWikiFiLinkToToolbox() {
     
     aNode.appendChild(document.createTextNode(name));
     aNode.setAttribute('href', link);
+    aNode.setAttribute('target', '_blank');
     liNode.appendChild(aNode);
     liNode.className = 'plainlinks';
     node.appendChild(liNode);
