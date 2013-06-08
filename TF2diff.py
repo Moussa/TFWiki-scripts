@@ -7,6 +7,7 @@ import shutil
 import chardet
 import fnmatch
 from prettydiff import poot
+from upload_loc_files import update_lang_files
 
 from config import config
 
@@ -199,7 +200,6 @@ def main():
                 choices.append(game)
         choice = get_choice(choices)
 
-
     # Try load config for specified game.
     try:
         fallback = config["fallback"]
@@ -306,7 +306,7 @@ def main():
     # Stage all changes to git repo
     print '\nStaging changes in git repo'
     subprocess.Popen(['git', 'add', '-A'], shell=True, cwd=workingRepoDir).communicate()
-
+    
     # Commit to wiki
     if not auto_wiki:
         raw_input("Ready to submit to Wiki.  Hit enter to go ahead.")
@@ -317,6 +317,11 @@ def main():
     print '\nGenerating git diff file'
     outputfile = open(diffOutput, 'wb')
     subprocess.Popen(['git', 'diff', '-U', '--cached'], shell=True, stdout=outputfile, cwd=workingRepoDir).communicate()
+
+    if game.lower() == 'tf2':
+        # Update localization files
+        print '\nUpdating wiki localization files'
+        update_lang_files(wikiUsername, wikiPassword, patchTitle, workingRepoDir)
 
     # Commit to repo
     print '\nCommiting to repo'
