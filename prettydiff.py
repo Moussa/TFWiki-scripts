@@ -13,8 +13,8 @@ lineMatch3 = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+)\s*@@')
 
 binaryFileRe = re.compile(r'Binary files (.+) and (.+) differ')
 textFileRe = re.compile(r'--- (.[^\n]+)\n\+\+\+ (.[^\n]+)\n(.+)', re.DOTALL)
-statusRe = re.compile(r'^(\w)\s+\"(.+)\"')
-statusReRenamed = re.compile(r'^R\s+\"(.+)\"\s+->\s+\"(.+)\"')
+statusRe = re.compile(r'^(\w)\s+\"?(.[^\"]+)\"?')
+statusReRenamed = re.compile(r'^R\s+\"?(.[^\"]+)\"?\s+->\s+\"?(.[^\"]+)\"?')
 
 def u(s):
 	if isinstance(s, unicode):
@@ -50,6 +50,7 @@ def pootDiff(wiki, patchName, gitRepo):
 			isRenamed = True
 			oldname = re.search(statusReRenamed, file).group(1)
 			newname = re.search(statusReRenamed, file).group(2)
+			filename = newname
 		else:
 			isRenamed = False
 			filename = re.search(statusRe, file).group(2)
@@ -88,7 +89,10 @@ def pootDiff(wiki, patchName, gitRepo):
 				contents = u''
 			else:
 				isBinary = False
-				contents = u(re.search(textFileRe, diff).group(3)).strip()
+				if 'new file mode 100644' not in diff:
+					contents = u(re.search(textFileRe, diff).group(3).encode('utf-8')).strip()
+				else:
+					contents = u''
 
 			files.append({
 				'name': filename,
@@ -199,7 +203,7 @@ def pootDiff(wiki, patchName, gitRepo):
 		else:
 			ret += u'Modified'
 		ret += u': <span class="diff-name">'
-		subPageName = u'Template:PatchDiff/' + patchName + u'/' + f['name']
+		subPageName = u'Template:PatchDiff/' + patchName + u'/' + f['name'].replace("{", "(")
 		if not isBinary and not isRenamed:
 			ret += u'[[' + subPageName + u'|' + f['name'] + u']]'
 		elif isRenamed:
@@ -270,6 +274,9 @@ def pootDiff(wiki, patchName, gitRepo):
 	while not success:
 		try:
 			wikitools.page.Page(wiki, u'Template:PatchDiff/' + patchName).edit(patchDiff, summary=u'Diff of patch [[:' + patchName + u']].', minor=True, bot=True)
+			# f = open('difftextout.txt', 'wb')
+			# f.write(patchDiff)
+			# f.close()
 			success = True
 		except:
 			print 'Failed to edit, retrying'
