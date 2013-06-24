@@ -120,10 +120,10 @@ def returnEncoding(string):
 
 def getPatchName(format):
     choices = []
-    choice_modifiers = [24, 0, -24, -48, -72]
+    choice_modifiers = [0, -24, -48, -72]
 
     for mod in choice_modifiers:
-        suggestion = time.strftime(format, time.localtime(time.time() + (mod * 60 * 60)))
+        suggestion = time.strftime(format, time.localtime(time.time() + (mod * 60 * 60))).replace(' 0', ' ') # gets rid of leading zeros on days
         choices.append(suggestion)
     choices.append("Custom")
     choice = get_choice(choices)
