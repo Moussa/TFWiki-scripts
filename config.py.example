@@ -1,0 +1,18 @@
+import time
+config = {"fallback": {"workingRepoDir": r'', # Directory where Git repo exists
+                       "tempDir": r'', # Directory where files will be temporarily stored. (lots of writing/reading)
+                       "hlExtract": r'', # Where HLExtract.exe resides
+                       "gameFolder": r'', # The in which the game resides
+                       "diffOutput": r'', # Location and name of file for raw git diff output
+                       "patchNameFormat": r"%B %d, %Y Patch",
+                       "wikiApi": r"",
+                       "wikiUsername": r"",
+                       "wikiPassword": r""
+                      },
+          "tf2":    {"workingRepoDir": r'',
+                       "tempDir": r'',
+                       "gameFolder": r'',
+                       "diffOutput": r'D:\tf2_{generate_time!s}.txt'.format(generate_time = time.mktime(time.gmtime())),
+                       "patchNameFormat": r"%B %d, %Y Patch"
+                       }
+        }
