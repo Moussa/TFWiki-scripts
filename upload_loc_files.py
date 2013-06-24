@@ -5,9 +5,8 @@ import re, os
 import wikitools
 import subprocess
 import getpass
-from uploadFile import *
 
-statusRe = re.compile(r'^(\w)\s+\"(.+)\"')
+statusRe = re.compile(r'^(\w)\s+(.+)')
 
 content = r"""<!-- This page is updated by a bot. Changes made to it will likely be lost the next time it edits. -->
 == Recent changes ==
@@ -20,32 +19,33 @@ content = r"""<!-- This page is updated by a bot. Changes made to it will likely
 [[Category:Text files]]
 [[Category:Localization files]]"""
 
-def update_lang_files(wikiUsername, wikiPassword, patchTitle, gitRepo, wikiAddress = r'http://wiki.tf2.com/w/', wikiApi = r'http://wiki.tf2.com/w/api.php'):
+def update_lang_files(wikiUsername, wikiPassword, patchTitle, gitRepo, wikiApi = r'http://wiki.tf2.com/w/api.php'):
 	files = []
 	p = subprocess.Popen(['git', 'status', '--short'], shell=True, stdout=subprocess.PIPE, cwd=gitRepo)
 	filesChanged, err = p.communicate()
-	filesChanged = filesChanged.strip().split('\n')
-	for file in filesChanged:
-		filename = re.search(statusRe, file).group(2)
+	filesChanged = [line.strip() for line in filesChanged.split('\n')]
+	for file_ in filesChanged:
+		filename = re.search(statusRe, file_).group(2)
 		filename = os.path.split(filename)[1]
 		if filename.startswith('tf_') and filename.endswith('.txt'):
 			files.append(filename)
 
-	uploader = wikiUpload.wikiUploader(wikiUsername, wikiPassword, wikiAddress)
 	wiki = wikitools.wiki.Wiki(wikiApi)
 	wiki.login(wikiUsername, wikiPassword)
-	for file in files:
+	for file_ in files:
 		success = False
 		n = 0
 		while n < 5 and not success:
 			try:
-				uploader.upload(gitRepo + os.sep + r'team fortress 2 content.gcf\tf\resource' + os.sep + file, u'File:' + file, u'Uploaded new revision of %s for [[:%s]].' % (file, patchTitle), '', overwrite=True)
-				wikitools.page.Page(wiki, u'File:' + file).edit(content % patchTitle, summary=u'Updated %s for [[:%s]].' % (file, patchTitle), minor=True, bot=True, skipmd5=True)
+				loc_file = wikitools.wikifile.File(wiki=wiki, title=u'File:' + file_)
+				loc_file.upload(fileobj=open(gitRepo + os.sep + r'tf\resource' + os.sep + file_, "rb"), ignorewarnings=True, comment=u'Uploaded new revision of %s for [[:%s]].' % (file_, patchTitle))
+				wikitools.page.Page(wiki, u'File:' + file_).edit(content % patchTitle, summary=u'Updated %s for [[:%s]].' % (file_, patchTitle), minor=True, bot=True, skipmd5=True)
 				success = True
-			except Exception:
+			except Exception, e:
+				print e
 				n += 1
 		if not success:
-			print 'Could not upload', file
+			print 'Could not upload', file_
 
 if __name__ == '__main__':
 	wikiUsername = raw_input('Poot Wiki username: ')
