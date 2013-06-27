@@ -23,7 +23,7 @@ def update_lang_files(wikiUsername, wikiPassword, patchTitle, gitRepo, wikiApi =
 	files = []
 	p = subprocess.Popen(['git', 'status', '--short'], shell=True, stdout=subprocess.PIPE, cwd=gitRepo)
 	filesChanged, err = p.communicate()
-	filesChanged = [line.strip() for line in filesChanged.splitlines()]
+	filesChanged = [line.strip() for line in filesChanged.split('\n') if line.strip() != '']
 	for file_ in filesChanged:
 		filename = re.search(statusRe, file_).group(2)
 		filename = os.path.split(filename)[1]
