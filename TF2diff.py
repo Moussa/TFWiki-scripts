@@ -6,10 +6,25 @@ import sys
 import shutil
 import chardet
 import fnmatch
+from ircutils import bot, format
 from prettydiff import poot
 from upload_loc_files import update_lang_files
 
 from config import config
+
+class AnnounceBot(bot.SimpleBot):
+    def __init__(self, nickname, patch, address):
+        bot.SimpleBot.__init__(self, nickname)
+        self.patch = patch
+        self.address = address
+
+    def on_join(self, event):
+        message = '{0}: {1} [{2}]'.format(format.color(format.bold('Uploaded patch diff'), format.GREEN),
+                                            format.color(format.bold(self.patch), format.DARK_GRAY),
+                                            self.address + self.patch.replace(' ', '_') + '#Files_changed'
+                                            )
+        self.send_message(event.target, message)
+        self.quit()
 
 def compare(sourceDir, targetDir, ignorePattern):
     """ Compare two directories and return list of missing files from the target directory """
@@ -216,6 +231,8 @@ def main():
         wikiApi = working.get("wikiApi", fallback["wikiApi"])
         wikiUsername = working.get("wikiUsername", fallback["wikiUsername"])
         wikiPassword = working.get("wikiPassword", fallback["wikiPassword"])
+        wikiArticleAddress = working.get("wikiArticleAddress", None)
+        ircChannel = working.get("ircChannel", None)
         hlExtract = working.get("hlExtract", fallback["hlExtract"])
         name = os.path.split(gameFolder)[1]
 
@@ -312,6 +329,13 @@ def main():
         raw_input("Ready to submit to Wiki.  Hit enter to go ahead.")
     print "\nSubmitting prettydiff to wiki"
     poot(wikiApi, wikiUsername, wikiPassword, patchTitle, workingRepoDir)
+
+    # Announce in IRC
+    if ircChannel:
+        print "\nAnnouncing completion to IRC channel"
+        announcebot = AnnounceBot(wikiUsername, patchTitle, wikiArticleAddress)
+        announcebot.connect(r'chat.freenode.net', channel=ircChannel)
+        announcebot.start()
 
     # Get git .diff
     print '\nGenerating git diff file'
