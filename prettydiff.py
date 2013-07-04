@@ -251,15 +251,17 @@ def pootDiff(wiki, patchName, gitRepo):
 			finalText = u(u''.join(diffRet))
 			n = 0
 			success = False
+			page = wikitools.page.Page(wiki, subPageName)
 			while n < 10 and not success:
 				try:
-					wikitools.page.Page(wiki, subPageName).edit(finalText, summary=u'Diff of file "' + f['name'] + u'" for patch [[:' + patchName + u']].', minor=True, bot=True, skipmd5=True, timeout=60)
-					success = True
+					page.edit(finalText, summary=u'Diff of file "' + f['name'] + u'" for patch [[:' + patchName + u']].', minor=True, bot=True, skipmd5=True, timeout=60)
+					page.setPageInfo()
+					success = page.exists
 				except:
 					print 'Failed to edit, attempt %s of 10' % str(n)
 					n += 1
 			if not success:
-				wikitools.page.Page(wiki, subPageName).edit(u'<div class="diff-file">File too large to diff</div>', summary=u'Diff of file "' + f['name'] + u'" for patch [[:' + patchName + u']].', minor=True, bot=True, skipmd5=True)
+				page.edit(u'<div class="diff-file">File too large to diff</div>', summary=u'Diff of file "' + f['name'] + u'" for patch [[:' + patchName + u']].', minor=True, bot=True, skipmd5=True)
 		ret += u'</div>'
 		return ret
 	patchDiff = u''
@@ -268,16 +270,14 @@ def pootDiff(wiki, patchName, gitRepo):
 		print 'Processing file:', f['name'], 'in patch:', patchName
 		d = formatFile(f)
 		patchDiff += d
-		print d
 	print 'Editing patch diff page:', u'Template:PatchDiff/' + patchName
 	success = False
+	page = wikitools.page.Page(wiki, u'Template:PatchDiff/' + patchName)
 	while not success:
 		try:
-			wikitools.page.Page(wiki, u'Template:PatchDiff/' + patchName).edit(patchDiff, summary=u'Diff of patch [[:' + patchName + u']].', minor=True, bot=True)
-			# f = open('difftextout.txt', 'wb')
-			# f.write(patchDiff)
-			# f.close()
-			success = True
+			page.edit(patchDiff, summary=u'Diff of patch [[:' + patchName + u']].', minor=True, bot=True)
+			page.setPageInfo()
+			success = page.exists
 		except:
 			print 'Failed to edit, retrying'
 
