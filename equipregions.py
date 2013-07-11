@@ -23,7 +23,7 @@ for item in allitems:
 		print 'Processing', item['item_name']
 		itemname = schema.get_localized_item_name(item['item_name'])
 		if 'equip_region' in item:
-			region = item['equip_region']
+			region = item['equip_region'].lower()
 			if item['equip_region'] != 'hat':
 				add_region(itemname, region)
 		elif 'equip_regions' in item:

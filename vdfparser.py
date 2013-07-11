@@ -16,7 +16,11 @@ class VDF:
 		self.vdfstring = self.vdfstring.decode('utf-8')
 		if loc is not None:
 			self.locfile = open(loc, 'rb').read()
-			self.locfile = self.locfile.decode('utf-16')
+			try:
+				self.locfile = self.locfile.decode('utf-16')
+			except:
+				# Already decoded
+				pass
 
 		rString = re.compile(r'"([^"]+)"[ \t]*"([^"]*)"')
 		rDictionary = re.compile(r'"([^"]+)"\s*\{([^"{}]+)\}')
