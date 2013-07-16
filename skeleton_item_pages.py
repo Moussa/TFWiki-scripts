@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import urllib2
 import time
+import os
 import sys
 import wikitools
 import steam
@@ -28,7 +30,10 @@ def get_current_schema_state():
 	_ids = []
 	with open('schema_state.txt', 'rb') as f:
 		for line in f:
-			_ids.append(int(line.strip()))
+			try:
+				_ids.append(int(line.strip()))
+			except:
+				pass
 
 	return _ids
 
@@ -79,7 +84,33 @@ def create_page(page_title, template):
 	if page.exists:
 		print('Skipping, page already exists')
 	else:
-		page.edit(template, summary=u'Creating skeleton page for new item', minor=True, bot=False, skipmd5=True, timeout=60)
+		page.edit(template, summary='Creating skeleton page for new item', minor=True, bot=False, skipmd5=True, timeout=60)
+
+def upload_backpack_image(item_name, image_url, item_type):
+	with open(item_name + '.png', 'wb') as tmp:
+		tmp.write(urllib2.urlopen(image_url).read())
+
+	backpack_image = wikitools.wikifile.File(wiki, 'File:Backpack {0}.png'.format(item_name))
+	backpack_image.upload(fileobj=open(item_name + '.png', 'rb'), ignorewarnings=True, comment='')
+	os.remove(item_name + '.png')
+
+	page_content = """== Licensing ==
+{{{{ExtractTF2}}}}
+
+[[Category:Backpack images]]
+[[Category:{type} images]]"""
+
+	if item_type == 'hat':
+		page_content = page_content.format(type='Hat')
+	elif item_type == 'misc':
+		page_content = page_content.format(type='Misc')
+	elif item_type == 'weapon':
+		page_content = page_content.format(type='Weapon')
+	elif item_type == 'action':
+		page_content = page_content.format(type='Tool')
+
+	backpack_page = wikitools.page.Page(wiki, 'File:Backpack {0}.png'.format(item_name))
+	backpack_page.edit(page_content, summary='', minor=True, bot=False, skipmd5=True, timeout=60)
 
 def generate_pages(new_ids):
 	for _id in new_ids:
@@ -108,13 +139,14 @@ def generate_pages(new_ids):
 			pass
 
 		if template:
-			create_page(item.name, template)
+			# create_page(item.name, template)
+			upload_backpack_image(item.name, item.image, item_type)
 
 	# Save new current schema state
 	save_current_schema_ids()
 
 if __name__ == '__main__':
-	print('Fetching list of new item ids')
+	print('Fetching list of new item ids...')
 	new_ids = get_new_item_ids()
 
 	if len(new_ids) == 0:
