@@ -7,14 +7,14 @@ import os
 import sys
 import wikitools
 import steam
-from config import config
+from skeleton_config import config
 
 print('Fetching schema...')
 steam.api.key.set(config['steam_api_key'])
 schema = steam.items.schema('440', 'en_US')
 
-wiki = wikitools.wiki.Wiki(config['tf2']['wikiApi'])
-wiki.login(config['tf2']['wikiUsername'], config['tf2']['wikiPassword'])
+wiki = wikitools.wiki.Wiki(config['wikiApi'])
+wiki.login(config['wikiUsername'], config['wikiPassword'])
 
 def save_current_schema_ids():
 	_ids = get_schema_ids()

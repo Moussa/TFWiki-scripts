@@ -1,3 +1,4 @@
 *.txt
 *.pyc
 config.py
+skeleton_config.py
