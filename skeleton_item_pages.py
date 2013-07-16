@@ -66,7 +66,7 @@ def hat_or_misc_template():
 | released           = {patch_string}
 | availability       = 
 | trade              = yes
-| gift               = {can_gift}
+| gift               = 
 | paint              = 
 | rename             = yes
 | numbered           = 
@@ -76,6 +76,45 @@ def hat_or_misc_template():
   | item-description = {item_description}
 }}}}
 
+<!--
+== Update history ==
+'''{patch_string}'''
+* The {item_name} was added to the game.
+-->
+
+{class_navs}"""
+
+def weapon_template():
+	return """{{{{ra}}}}
+{{{{stub}}}}
+{{Item infobox
+| type               = weapon
+| image              = {item_name}.png
+| hide-kill-icon     = 
+| used-by            = {class_links}
+| slot               = {slot}
+| released           = {patch_string}
+| availability       = 
+| medieval           = 
+| show-ammo          = 
+| reload             = 
+| trade              = yes
+| gift               = 
+| rename             = yes
+| numbered           = 
+| loadout            = yes
+  | loadout-prefix   = none
+  | level            = Level {level} {level_type}
+  | item-description = {item_description}
+}}
+
+<!--
+== Update history ==
+'''{patch_string}'''
+* The {item_name} was added to the game.
+-->
+
+{{Allweapons Nav}}
 {class_navs}"""
 
 def create_page(page_title, template):
@@ -126,7 +165,6 @@ def generate_pages(new_ids):
                                                      item_name = item.name.replace(' ', '_'),
                                                      class_links = ", ".join(['[[{0}]]'.format(_class.capitalize()) for _class in item.equipable_classes]),
                                                      patch_string = time.strftime("{{{{Patch name|%m|%d|%Y}}}}", time.localtime(time.time() - (6*60*60))),
-                                                     can_gift = "yes" if item.craftable else "no",
                                                      item_description = item.description if item.description else "",
                                                      min_level = item.min_level,
                                                      max_level = item.max_level,
@@ -134,7 +172,15 @@ def generate_pages(new_ids):
                                                      class_navs = "\n".join(['{{{{{0} Nav}}}}'.format(_class.capitalize()) for _class in item.equipable_classes])
                                                      )
 		elif item_type == 'weapon':
-			pass
+			template =      weapon_template().format(item_name = item.name.replace(' ', '_'),
+                                                     class_links = ", ".join(['[[{0}]]'.format(_class.capitalize()) for _class in item.equipable_classes]),
+                                                     patch_string = time.strftime("{{{{Patch name|%m|%d|%Y}}}}", time.localtime(time.time() - (6*60*60))),
+                                                     slot = item.slot_name,
+                                                     item_description = item.description if item.description else "",
+                                                     level = item.min_level,
+                                                     level_type = item.type,
+                                                     class_navs = "\n".join(['{{{{{0} Nav}}}}'.format(_class.capitalize()) for _class in item.equipable_classes])
+                                                     )
 		elif item_type == 'action':
 			pass
 
