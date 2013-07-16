@@ -139,7 +139,7 @@ def generate_pages(new_ids):
 			pass
 
 		if template:
-			# create_page(item.name, template)
+			create_page(item.name, template)
 			upload_backpack_image(item.name, item.image, item_type)
 
 	# Save new current schema state
