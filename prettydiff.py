@@ -92,7 +92,7 @@ def pootDiff(wiki, patchName, gitRepo):
 				try:
 					contents = u(re.search(textFileRe, diff).group(3).encode('utf-8')).strip()
 				except:
-					contents = u''
+					contents = u' '
 
 			files.append({
 				'name': filename,
