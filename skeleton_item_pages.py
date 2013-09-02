@@ -66,7 +66,7 @@ def hat_or_misc_template():
 | released           = {patch_string}
 | availability       = 
 | trade              = yes
-| gift               = 
+| gift               = yes
 | paint              = 
 | rename             = yes
 | numbered           = 
@@ -164,7 +164,7 @@ def generate_pages(new_ids):
 			template = hat_or_misc_template().format(type = item_type,
                                                      item_name = item.name.replace(' ', '_'),
                                                      class_links = ", ".join(['[[{0}]]'.format(_class.capitalize()) for _class in item.equipable_classes]),
-                                                     patch_string = time.strftime("{{{{Patch name|%m|%d|%Y}}}}", time.localtime(time.time() - (6*60*60))),
+                                                     patch_string = time.strftime("{{Patch name|%m|%d|%Y}}", time.localtime(time.time() - (6*60*60))),
                                                      item_description = item.description if item.description else "",
                                                      min_level = item.min_level,
                                                      max_level = item.max_level,
@@ -174,7 +174,7 @@ def generate_pages(new_ids):
 		elif item_type == 'weapon':
 			template =      weapon_template().format(item_name = item.name.replace(' ', '_'),
                                                      class_links = ", ".join(['[[{0}]]'.format(_class.capitalize()) for _class in item.equipable_classes]),
-                                                     patch_string = time.strftime("{{{{Patch name|%m|%d|%Y}}}}", time.localtime(time.time() - (6*60*60))),
+                                                     patch_string = time.strftime("{{Patch name|%m|%d|%Y}}", time.localtime(time.time() - (6*60*60))),
                                                      slot = item.slot_name,
                                                      item_description = item.description if item.description else "",
                                                      level = item.min_level,
