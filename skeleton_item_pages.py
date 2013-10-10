@@ -82,6 +82,7 @@ def hat_or_misc_template():
 * The {item_name} was added to the game.
 -->
 
+{{HatNav}}
 {class_navs}"""
 
 def weapon_template():
@@ -156,30 +157,35 @@ def generate_pages(new_ids):
 		item = schema.__getitem__(_id)
 		print("Processing '{0}'".format(item.name))
 
-		used_by_classes = item.equipable_classes
+		if item.equipable_classes != []
+			class_links = ", ".join(['[[{0}]]'.format(_class.capitalize()) for _class in item.equipable_classes])
+			class_navs = "\n".join(['{{{{{0} Nav}}}}'.format(_class.capitalize()) for _class in item.equipable_classes])
+		else:
+			class_links = "[[Classes|All classes]]"
+			class_navs = ""
 		item_type = get_item_type(item)
 
 		template = None
 		if item_type == 'hat' or item_type == 'misc':
 			template = hat_or_misc_template().format(type = item_type,
                                                      item_name = item.name.replace(' ', '_'),
-                                                     class_links = ", ".join(['[[{0}]]'.format(_class.capitalize()) for _class in item.equipable_classes]),
+                                                     class_links = class_links,
                                                      patch_string = time.strftime("{{Patch name|%m|%d|%Y}}", time.localtime(time.time() - (6*60*60))),
                                                      item_description = item.description if item.description else "",
                                                      min_level = item.min_level,
                                                      max_level = item.max_level,
                                                      level_type = item.type,
-                                                     class_navs = "\n".join(['{{{{{0} Nav}}}}'.format(_class.capitalize()) for _class in item.equipable_classes])
+                                                     class_navs = class_navs
                                                      )
 		elif item_type == 'weapon':
 			template =      weapon_template().format(item_name = item.name.replace(' ', '_'),
-                                                     class_links = ", ".join(['[[{0}]]'.format(_class.capitalize()) for _class in item.equipable_classes]),
+                                                     class_links = class_links,
                                                      patch_string = time.strftime("{{Patch name|%m|%d|%Y}}", time.localtime(time.time() - (6*60*60))),
                                                      slot = item.slot_name,
                                                      item_description = item.description if item.description else "",
                                                      level = item.min_level,
                                                      level_type = item.type,
-                                                     class_navs = "\n".join(['{{{{{0} Nav}}}}'.format(_class.capitalize()) for _class in item.equipable_classes])
+                                                     class_navs = class_navs
                                                      )
 		elif item_type == 'action':
 			pass
