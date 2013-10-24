@@ -76,11 +76,11 @@ def hat_or_misc_template():
   | item-description = {item_description}
 }}}}
 
-<!--
+The '''{item_name}''' is a [[headwear]] item for the {class_links}.
+
 == Update history ==
 '''{patch_string}'''
 * The {item_name} was added to the game.
--->
 
 {{HatNav}}
 {class_navs}"""
@@ -109,11 +109,11 @@ def weapon_template():
   | item-description = {item_description}
 }}
 
-<!--
+The '''{item_name}''' is a [[weapon]] for the {class_links}.
+
 == Update history ==
 '''{patch_string}'''
 * The {item_name} was added to the game.
--->
 
 {{Allweapons Nav}}
 {class_navs}"""
