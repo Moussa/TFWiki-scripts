@@ -76,13 +76,13 @@ def hat_or_misc_template():
   | item-description = {item_description}
 }}}}
 
-The '''{item_name}''' is a [[headwear]] item for the {class_links}.
+The '''{proper_item_name}''' is a [[headwear]] item for the {class_links}.
 
 == Update history ==
 '''{patch_string}'''
-* The {item_name} was added to the game.
+* The {proper_item_name} was added to the game.
 
-{{HatNav}}
+{{{{HatNav}}}}
 {class_navs}"""
 
 def weapon_template():
@@ -109,13 +109,13 @@ def weapon_template():
   | item-description = {item_description}
 }}
 
-The '''{item_name}''' is a [[weapon]] for the {class_links}.
+The '''{proper_item_name}''' is a [[weapon]] for the {class_links}.
 
 == Update history ==
 '''{patch_string}'''
-* The {item_name} was added to the game.
+* The {proper_item_name} was added to the game.
 
-{{Allweapons Nav}}
+{{{{Allweapons Nav}}}}
 {class_navs}"""
 
 def create_page(page_title, template):
@@ -131,7 +131,7 @@ def upload_backpack_image(item_name, image_url, item_type):
 		tmp.write(urllib2.urlopen(image_url).read())
 
 	backpack_image = wikitools.wikifile.File(wiki, 'File:Backpack {0}.png'.format(item_name))
-	backpack_image.upload(fileobj=open(item_name + '.png', 'rb'), ignorewarnings=True, comment='')
+	backpack_image.upload(fileobj=open(item_name + '.png', 'rb'), ignorewarnings=False, comment='')
 	os.remove(item_name + '.png')
 
 	page_content = """== Licensing ==
@@ -157,7 +157,7 @@ def generate_pages(new_ids):
 		item = schema.__getitem__(_id)
 		print("Processing '{0}'".format(item.name))
 
-		if item.equipable_classes != []
+		if item.equipable_classes != []:
 			class_links = ", ".join(['[[{0}]]'.format(_class.capitalize()) for _class in item.equipable_classes])
 			class_navs = "\n".join(['{{{{{0} Nav}}}}'.format(_class.capitalize()) for _class in item.equipable_classes])
 		else:
@@ -169,6 +169,7 @@ def generate_pages(new_ids):
 		if item_type == 'hat' or item_type == 'misc':
 			template = hat_or_misc_template().format(type = item_type,
                                                      item_name = item.name.replace(' ', '_'),
+                                                     proper_item_name = item.name,
                                                      class_links = class_links,
                                                      patch_string = time.strftime("{{Patch name|%m|%d|%Y}}", time.localtime(time.time() - (6*60*60))),
                                                      item_description = item.description if item.description else "",
@@ -179,6 +180,7 @@ def generate_pages(new_ids):
                                                      )
 		elif item_type == 'weapon':
 			template =      weapon_template().format(item_name = item.name.replace(' ', '_'),
+													 proper_item_name = item.name,
                                                      class_links = class_links,
                                                      patch_string = time.strftime("{{Patch name|%m|%d|%Y}}", time.localtime(time.time() - (6*60*60))),
                                                      slot = item.slot_name,
