@@ -363,25 +363,15 @@ function deletePage(title){
     });
 }
 
-function killContribs(user){
-    // query to get the users contributions
-    nearbyApi({action: "query", list: "usercontribs", ucuser: user}, function (res){
-        console.log('LOG: usercontribs=' + res);
-        if (res.query.usercontribs.length > 5){
-            alert('User:' + user + ' has more than 5 edits');
+function killContribs(contribs){
+    console.log('LOG: usercontribs=' + contribs);
+    for(var edit in contribs){
+        // only delete contribution if new page
+        if ('new' in contribs[edit]){
+            console.log('LOG: usercontribtodelete=' + contribs[edit]);
+            deletePage(contribs[edit].title);
         }
-        else{
-            for(var edit in res.query.usercontribs){
-                // only delete contribution if new page
-                if ('new' in res.query.usercontribs[edit]){
-                    console.log('LOG: usercontribtodelete=' + res.query.usercontribs[edit]);
-                    deletePage(res.query.usercontribs[edit].title);
-                }
-            }
-            // vas gud
-            alert('User:' + user + ' has been terminated. Good day');
-        }
-    });
+    }
 }
 
 function blockUser(user){
@@ -402,18 +392,27 @@ function blockUser(user){
 function keel(user){
     // query user details
     nearbyApi({action: "query", list: "users", ususers: user, usprop: "registration"}, function (res){
-        // hit it doc
-        blockUser(user);
-        killContribs(user);
+        nearbyApi({action: "query", list: "usercontribs", ucuser: user}, function (res){
+            if (res.query.usercontribs.length > 5){
+                alert('User:' + user + ' has more than 5 edits');
+            }
+            else {
+                // hit it doc
+                blockUser(user);
+                killContribs(res.query.usercontribs);
+                // vas gud
+                alert('User:' + user + ' has been terminated. Good day');
+            }
+        });
     });
 }
 
 function pootSecretSauce(){
     // insert blockdelete link in new page revision details
     $('.mw-usertoollinks a:last-child').after(" | <a href=# id='blockdelete'>blockdelete</a>")
-    $("#blockdelete").click(function(){
+    $("a#blockdelete").click(function(){
         // grab username from revision details
-        var user = $('.mw-userlink').text();
+        var user = $('.diff-ntitle .mw-userlink').text();
         console.log('LOG: User=' + user);
 
         keel(user);
