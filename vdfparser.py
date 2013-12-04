@@ -3,6 +3,7 @@
 # I just wrote the methods :)
 
 import re
+import steam
 
 class VDF:
 	def __init__(self, loc='tf_english.txt'):
@@ -22,33 +23,7 @@ class VDF:
 				# Already decoded
 				pass
 
-		rString = re.compile(r'"([^"]+)"[ \t]*"([^"]*)"')
-		rDictionary = re.compile(r'"([^"]+)"\s*\{([^"{}]+)\}')
-		rValues = re.compile(r'~OHAI~(\d+)~')
-
-		self.valueCount = -1
-		self.values = []
-		def registerString(m):
-			self.valueCount += 1
-			self.values.append((m.group(1), m.group(2)))
-			return '~OHAI~' + str(self.valueCount) + '~'
-
-		self.vdfstring = rString.sub(registerString, self.vdfstring)
-
-		d = {}
-		while True:
-			m = rDictionary.search(self.vdfstring)
-			if m is None:
-				break
-			d = {}
-			for v in rValues.finditer(m.group(2)):
-				val = self.values[int(v.group(1))]
-				d[val[0]] = val[1]
-			self.valueCount += 1
-			self.values.append((m.group(1), d))
-			self.vdfstring = self.vdfstring[:m.start()] + '~OHAI~' + str(self.valueCount) + '~' + self.vdfstring[m.end():]
-
-		self.finalParsed = self.values[-1]
+		self.finalParsed = steam.vdf.loads(self.vdfstring)
 
 	def get_localized_item_name(self, itemnametoken):
 		""" Returns the localized item name of any
@@ -63,11 +38,11 @@ class VDF:
 
 	def get_items(self):
 		""" Returns the entire items dict. """
-		return self.finalParsed[1]['items']
+		return self.finalParsed['items_game']['items']
 
 	def get_prefabs(self):
 		""" Returns the entire prefabs dict. """
-		return self.finalParsed[1]['prefabs']
+		return self.finalParsed['items_game']['prefabs']
 
 	def get_item(self, key, value, allmatches=False):
 		""" Returns the item dict that matches the
@@ -77,12 +52,12 @@ class VDF:
 			that match the given key and value.
 		"""
 		items = []
-		for item in self.finalParsed[1]['items']:
-			if key in self.finalParsed[1]['items'][item]:
-				keyval = self.finalParsed[1]['items'][item][key]
+		for item in self.finalParsed['items_game']['items']:
+			if key in self.finalParsed['items_game']['items'][item]:
+				keyval = self.finalParsed['items_game']['items'][item][key]
 				if keyval == value:
 					if allmatches:
-						items.append(self.finalParsed[1]['items'][item])
+						items.append(self.finalParsed['items_game']['items'][item])
 					else:
-						return self.finalParsed[1]['items'][item]
+						return self.finalParsed['items_game']['items'][item]
 		return items
