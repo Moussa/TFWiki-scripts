@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # Generates the equip regions table found at
-# Template:Equip region table on the wiki
+# http://wiki.tf/Template:Equip_region_table on the wiki
 
 from vdfparser import VDF
 
@@ -23,37 +24,31 @@ for item in allitems:
 		print 'Processing', item['item_name']
 		itemname = schema.get_localized_item_name(item['item_name'])
 		if 'equip_region' in item:
-			region = item['equip_region'].lower()
-			if item['equip_region'] != 'hat':
-				add_region(itemname, region)
+			if isinstance(item['equip_region'], dict): # Valve are silly and on rare occasions put multiple regions in this field
+				for region in regions.keys():
+					if region != 'hat':
+						add_region(itemname, region.lower())
+			else:
+				if item['equip_region'] != 'hat':
+					add_region(itemname, item['equip_region'].lower())
 		elif 'equip_regions' in item:
 			regions = item['equip_regions']
-			for region in regions:
-				if region != 'hat':
-					add_region(itemname, region)
-		if 'prefab' in item:
-			if item['prefab'] == 'award_medal':
-				region = 'medal'
-			elif item['prefab'] == 'zombie':
-				region = 'zombie_body'
-			elif item['prefab'] == 'grenades':
-				region = 'grenades'
-			elif item['prefab'] == 'mask':
-				region = 'head_skin'
-			elif item['prefab'] == 'beard':
-				region = 'beard'
-			elif item['prefab'] == 'backpack':
-				region = 'back'
-			elif item['prefab'] == 'pyrovision_goggles':
-				region = 'glasses'
+			if isinstance(regions, basestring): # Valve are also silly because sometimes they put a single region string here
+				if regions != 'hat':
+					add_region(itemname, regions.lower())
 			else:
-				print 'Prefab', item['prefab'], 'has unknown region'
-				continue
-			add_region(itemname, region)
+				for region in regions:
+					if region != 'hat':
+						add_region(itemname, region.lower())
+		if 'prefab' in item:
+			if item['prefab'] in prefabs:
+				prefab = prefabs[item['prefab']]
+				if 'equip_region' in prefab and prefab['equip_region'] != 'hat':
+					region = prefab['equip_region']
+					add_region(itemname, region)
 
 ### Some output fixes here ###
-# Replace medals
-medalsException = ['First Place - ETF2L Highlander Tournament',
+itemExceptions = ['First Place - ETF2L Highlander Tournament',
 				   'First Place - Gamers With Jobs Tournament',
 				   'Participant - ETF2L Highlander Tournament',
 				   'Participant - Gamers With Jobs Tournament',
@@ -146,21 +141,126 @@ medalsException = ['First Place - ETF2L Highlander Tournament',
 				   'ESL Season VII Premiership Division 1st Place',
 				   'ESL Season VII Premiership Division 2nd Place',
 				   'ESL Season VII Premiership Division 3rd Place',
-				   'ESL Season VII Premiership Division Participant']
+				   'ESL Season VII Premiership Division Participant',
+				   'AU Highlander Community League First Place',
+				   'AU Highlander Community League Participant',
+				   'AU Highlander Community League Second Place',
+				   'AU Highlander Community League Third Place',
+				   'ESH Ultiduo #1 Gold Medal',
+				   'ESH Ultiduo #2 Gold Medal',
+				   'ESH Ultiduo #3 Gold Medal',
+				   'ESH Ultiduo #4 Gold Medal',
+				   'ESH Ultiduo #5 Gold Medal',
+				   'ESH Ultiduo #6 Gold Medal',
+				   'ESH Ultiduo #7 Gold Medal',
+				   'ETF2L 6v6 Division 1 Group Winner',
+				   'ETF2L 6v6 Division 2 Group Winner',
+				   'ETF2L 6v6 Division 3 Group Winner',
+				   'ETF2L 6v6 Division 4 Group Winner',
+				   'ETF2L 6v6 Division 5 Group Winner',
+				   'ETF2L 6v6 Division 6 Group Winner',
+				   'ETF2L 6v6 Division 1 Group Winner',
+				   'ETF2L 6v6 Premier Division Bronze Medal',
+				   'ETF2L 6v6 Premier Division Gold Medal',
+				   'ETF2L 6v6 Premier Division Silver Medal',
+				   'ETF2L Highlander Division 1 Bronze Medal',
+				   'ETF2L Highlander Division 1 Gold Medal',
+				   'ETF2L Highlander Division 1 Group Winner',
+				   'ETF2L Highlander Division 1 Silver Medal',
+				   'ETF2L Highlander Division 2 Group Winner',
+				   'ETF2L Highlander Division 3 Group Winner',
+				   'ETF2L Highlander Division 4 Group Winner',
+				   'ETF2L Highlander Division 5 Group Winner',
+				   'ETF2L Highlander Division 6 Group Winner',
+				   'ETF2L Highlander Premier Division Bronze Medal',
+				   'ETF2L Highlander Premier Division Gold Medal',
+				   'ETF2L Highlander Premier Division Silver Medal',
+				   'ETF2L Ultiduo #1 Gold Medal',
+				   'ETF2L Ultiduo #2 Gold Medal',
+				   'ETF2L Ultiduo #3 Gold Medal',
+				   'ETF2L Ultiduo #4 Gold Medal',
+				   'OWL 10 Division 2 First Place',
+				   'OWL 10 Division 2 Participant',
+				   'OWL 10 Division 2 Second Place',
+				   'OWL 10 Division 2 Third Place',
+				   'OWL 10 Division 3 First Place',
+				   'OWL 10 Division 3 Participant',
+				   'OWL 10 Division 3 Second Place',
+				   'OWL 10 Division 3 Third Place',
+				   'OWL 10 Division 4 First Place',
+				   'OWL 10 Division 4 Participant',
+				   'OWL 10 Division 4 Second Place',
+				   'OWL 10 Division 4 Third Place',
+				   'OWL 10 Division 5 First Place',
+				   'OWL 10 Division 5 Participant',
+				   'OWL 10 Division 5 Second Place',
+				   'OWL 10 Division 5 Third Place',
+				   'OWL 10 Division 6 First Place',
+				   'OWL 10 Division 6 Participant',
+				   'OWL 10 Division 6 Second Place',
+				   'OWL 10 Division 6 Third Place',
+				   'OWL 10 Premier Division First Place',
+				   'OWL 10 Premier Division Participant',
+				   'OWL 10 Premier Division Second Place',
+				   'OWL 10 Premier Division Third Place',
+				   'Ready Steady Pan Participant',
+				   'Ready Steady Pan First Place',
+				   'Ready Steady Pan Second Place',
+				   'Ready Steady Pan Third Place',
+				   'Ready Steady Pan Tournament Helper',
+				   'Tournament Medal',
+				   'UGC 6vs6 European Participant',
+				   'UGC 6vs6 Platinum Participant',
+				   'UGC 6vs6 Silver Participant',
+				   'UGC 6vs6 Steel Participant',
+				   'UGC Highlander 1st Place',
+				   'UGC Highlander 1st Place Gold',
+				   'UGC Highlander 1st Place Iron',
+				   'UGC Highlander 1st Place Platinum',
+				   'UGC Highlander 1st Place Silver',
+				   'UGC Highlander 1st Place Steel',
+				   'UGC Highlander 2nd Place',
+				   'UGC Highlander 2nd Place Gold',
+				   'UGC Highlander 2nd Place Iron',
+				   'UGC Highlander 2nd Place Platinum',
+				   'UGC Highlander 2nd Place Silver',
+				   'UGC Highlander 2nd Place Steel',
+				   'UGC Highlander 3rd Place',
+				   'UGC Highlander 3rd Place Gold',
+				   'UGC Highlander 3rd Place Iron',
+				   'UGC Highlander 3rd Place Platinum',
+				   'UGC Highlander 3rd Place Silver',
+				   'UGC Highlander 3rd Place Steel',
+				   'UGC Highlander Gold Participant',
+				   'UGC Highlander Iron Participant',
 
-regionsDict['medal'] = [item for item in regionsDict['medal'] if not item in medalsException]
-regionsDict['medal'].append('Tournament Medal - ETF2L Highlander Tournament')
-regionsDict['medal'].append('Tournament Medal - GWJ Tournament')
-regionsDict['medal'].append('Tournament Medal - UGC Highlander Tournament')
+				   'Voodoo-Cursed Soul',
+				   'Demobot Armor',
+				   'Engineerbot Armor',
+				   'Heavybot Armor',
+				   'Pyrobot Armor',
+				   'Scoutbot Armor',
+				   'Sentrybuster',
+				   'Sniperbot Armor',
+				   'Soldierbot Armor',
+				   'Spybot Armor',
+				   'Medicbot Chariot'
+				   ]
+
+if 'medal' in regionsDict:
+	regionsDict['medal'].append('Tournament Medal - ETF2L Highlander Tournament')
+	regionsDict['medal'].append('Tournament Medal - GWJ Tournament')
+	regionsDict['medal'].append('Tournament Medal - UGC Highlander Tournament')
 
 for region in regionsDict:
 	# Fix Essential Accessories
 	if 'The Essential Accessories' in regionsDict[region]:
 		regionsDict[region].remove('The Essential Accessories')
 		regionsDict[region].append('Essential Accessories')
-	# Remove un-equippable Voodoo-Cursed Soul
-	if 'Voodoo-Cursed Soul' in regionsDict[region]:
-		regionsDict[region].remove('Voodoo-Cursed Soul')
+
+	for item in itemExceptions:
+		if item in regionsDict[region]:
+			regionsDict[region].remove(item)
 
 regionsDict = sorted(regionsDict.items())
 output = open('equipregions.txt', 'wb')
@@ -170,6 +270,7 @@ for regionname, regionitems in regionsDict:
 	output.write('! {{item name|er ' + regionname + '}}')
 	n = 1
 	for item in regionitems:
+		item = item.encode('utf-8')
 		if len(regionitems) == 1:
 			if item == 'Halloween Masks':
 				output.write('\n| style="font-weight:bold; font-size:0.95em;" | [[File:Heavy Mask.png|40px]] [[Halloween Masks{{if lang}}|{{item name|Halloween Masks}}]]')
@@ -193,6 +294,6 @@ for regionname, regionitems in regionsDict:
 				output.write('\n --><br />{{item nav link|' + item + '}}<!--')
 			n += 1
 	output.write('\n|-\n')
-output.write('|}\n')
+output.write('|}')
 output.close()
-print '\nDone, printed to equipregions.txt' 
+print '\nDone, printed to equipregions.txt'
