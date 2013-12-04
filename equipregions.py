@@ -25,7 +25,7 @@ for item in allitems:
         itemname = schema.get_localized_item_name(item['item_name'])
         if 'equip_region' in item:
             if isinstance(item['equip_region'], dict): # Valve are silly and on rare occasions put multiple regions in this field
-                for region in regions.keys():
+                for region in item['equip_region']:
                     if region != 'hat':
                         add_region(itemname, region.lower())
             else:
