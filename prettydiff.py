@@ -13,7 +13,7 @@ lineMatch3 = re.compile(r'^@@\s*-(\d+),\d+\s*\+(\d+)\s*@@')
 
 binaryFileRe = re.compile(r'Binary files (.+) and (.+) differ')
 textFileRe = re.compile(r'--- (.[^\n]+)\n\+\+\+ (.[^\n]+)\n(.+)', re.DOTALL)
-statusRe = re.compile(r'^(\w)\s+\"?(.[^\"]+)\"?')
+statusRe = re.compile(r'^\s?(\w)\s+\"?(.[^\"]+)\"?')
 statusReRenamed = re.compile(r'^R\s+\"?(.[^\"]+)\"?\s+->\s+\"?(.[^\"]+)\"?')
 
 def u(s):
