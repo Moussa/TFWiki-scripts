@@ -1,24 +1,12 @@
-// Inserts a Wiki-Fi link in the toolbox on the left sidebar when viewing userpages
+// Inserts a Wiki-Fi link to the page title when viewing userpages
 
-function AddWikiFiLinkToToolbox() {
+function AddWikiFiLinkToUser() {
     if (wgPageName.substring(0, 4) != 'User') {
         return;
     }
-
-    var name = 'Wiki-Fi stats';
-    var link = 'http://stats.wiki.tf/user/tf/' + wgTitle;
-
-    var node = document.getElementById('p-tb').getElementsByTagName('div')[0].getElementsByTagName('ul')[0];
     
-    var aNode = document.createElement('a');
-    var liNode = document.createElement('li');
-    
-    aNode.appendChild(document.createTextNode(name));
-    aNode.setAttribute('href', link);
-    aNode.setAttribute('target', '_blank');
-    liNode.appendChild(aNode);
-    liNode.className = 'plainlinks';
-    node.appendChild(liNode);
+    var link = ' <span style="font-size:12px">(<a href="http://stats.wiki.tf/user/tf/' + wgTitle + '" target="_blank">stats</a>)</span>'
+    $("#firstHeading span").append(link);
 }
 
-addOnloadHook(AddWikiFiLinkToToolbox);
+addOnloadHook(AddWikiFiLinkToUser);
