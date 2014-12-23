@@ -164,25 +164,35 @@ for regionname, regionitems in regionsDict:
     if not noAllclass and not specificClass:
         output.write(' rowspan="2" |')
     output.write(' {{item name|er ' + regionname + '}}')
+    blankLines = 0
     for TF_class in TF_classes:
-        isAllclass = TF_class == 'allclass'
+        isAllclass = (TF_class == 'allclass')
         if isAllclass and noAllclass:
             continue
         if specificClass and TF_class != specificClass:
             continue
         regionitems[TF_class].sort(key=lambda s: (s.lower(), s))
-        n = 1
         if not specificClass:
-            output.write('\n|')
             if isAllclass:
-                output.write('-') # This merges with the | above to make a |- a new row
-        for item in regionitems[TF_class]:
-            item = item.encode('utf-8')
-            if n != 1 and len(regionitems[TF_class]) != 1:
+                output.write('\n|-')
+            else: # This block handles merging multiple blank boxes.
+                if len(regionitems[TF_class]) == 0:
+                    blankLines += 1
+                if TF_class == 'spy' or len(regionitems[TF_class]) > 0:
+                    output.write('\n|')
+                    if blankLines not in [0,1]:
+                        output.write(' colspan=\"' + str(blankLines) + '\" |')
+                    if blankLines != 0 and len(regionitems[TF_class]) > 0:
+                        output.write('\n|')
+                    blankLines = 0
+        
+        for n in range(0, len(regionitems[TF_class])):
+            item = regionitems[TF_class][n].encode('utf-8')
+            if n != 0 and len(regionitems[TF_class]) != 1:
                 output.write('<!--\n-->')
                 if not isAllclass and not specificClass:
                     output.write('<br />')
-            if n == 1:
+            if n == 0:
                 if isAllclass or (specificClass == TF_class):
                     output.write('\n| colspan="9" align="center"')
                 output.write(' style="font-weight:bold; font-size:0.95em;" | ')
@@ -190,7 +200,6 @@ for regionname, regionitems in regionsDict:
                 output.write('[[File:Heavy Mask.png|40px]] [[Halloween Masks{{if lang}}|{{item name|Halloween Masks}}]]')
             else:
                 output.write('{{item nav link|' + item + '|small=yes}}')
-            n += 1
     output.write('\n|-\n')
 output.write('|}')
 output.close()
