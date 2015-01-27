@@ -17,49 +17,44 @@ usersList = []
 
 def populate_list(aufrom=None):
 	global usersList
+	url = wikiAddress
 	if aufrom:
-		url = wikiAddress + r'&aufrom=' + aufrom
-		result = json.loads(urllib2.urlopen(url.encode('utf-8')).read())
-	else:
-		result = json.loads(urllib2.urlopen(wikiAddress).read())
-	list = result['query']['allusers']
-	usersList += list
-	print 'User count:', str(len(usersList))
+		url += r'&aufrom=' + aufrom
+	result = json.loads(urllib2.urlopen(url.encode('utf-8')).read())
+	usersList += result['query']['allusers']
+	print 'User count:', len(usersList)
 	if 'query-continue' in result:
 		populate_list(aufrom=result['query-continue']['allusers']['aufrom'])
-	else:
-		return 1
 
 def userEditCount(nlower, nupper=None):
 	count = 0
 	for user in sortedList:
-		if nupper is None:
-			if user['editcount'] >= nlower:
-				count += 1
-		else:
-			if nlower <= user['editcount'] and user['editcount'] <= nupper:
+		if nlower <= user['editcount']:
+			if nupper == None or user['editcount'] <= nupper:
 				count += 1
 	return count
 
 def addTableRow(nlower, nupper=None):
+	print "Adding users with edit count", nlower, "-", nupper
+	count = userEditCount(nlower, nupper)
 	if nupper is None:
-		return """\n|-
+		return """|-
 | {nlower}+
 | {{{{Chart bar|{count}|max={max}}}}}
 | {percentage}%""".format(nlower = nlower,
-						 count = userEditCount(nlower),
+						 count = count,
 						 max = len(usersList),
-						 percentage = str('%.2f' % (100 * float(userEditCount(nlower))/float(len(usersList))))
+						 percentage = round(100 * float(count) / len(usersList), 2)
 						 )
 	else:
-		return """\n|-
+		return """|-
 | {nlower} - {nupper}
 | {{{{Chart bar|{count}|max={max}}}}}
 | {percentage}%""".format(nlower = nlower,
 						 nupper = nupper,
-						 count = userEditCount(nlower, nupper),
+						 count = count,
 						 max = len(usersList),
-						 percentage = str('%.2f' % (100 * float(userEditCount(nlower, nupper))/float(len(usersList))))
+						 percentage = round(100 * float(count) / len(usersList), 2)
 						 )
 
 def monthName(n):
@@ -78,98 +73,103 @@ def monthName(n):
 		}[n]
 
 def addTimeData(timeSortedList):
-	timeRange = [[0]*12 for i in range(NUMYEARS)] #[year][month]
+	print "Adding user signups"
+	timeRange = [[0]*12 for i in range(NUMYEARS)] # timeRange[year][month]
 	for user in timeSortedList:
 		time = user['registration']
-		timeRange[int(time[:4])-2010][int(time[5:7])-1] += 1 # 2013-05 -> 3, 4
+		timeRange[int(time[:4])-2010][int(time[5:7])-1] += 1 # 2013-05 -> year 3, month 4
 	runningTotal = 0
 	output = ""
-	for year in range(NUMYEARS):
-		for month in range(1,12):
+	for year in range(2010, 2010+NUMYEARS):
+		for month in range(1, 13):
 			if year == date.today().year and month == date.today().month:
-				continue # In current month, data would be incomplete
-			numUsers = timeRange[year][month-1]
+				break # We've reached the present, so current data is incorrect and future data is blank.
+			numUsers = timeRange[year-2010][month-1]
 			if numUsers == 0:
-				continue # Time segment has no data, just skip.
+				continue # No data for given time period
 			runningTotal += numUsers
-			output += """\n|-
-| <span style="display:none;">{year}{month}</span>{monthName} {year}
+			output += """|-
+| data-sort-value="{year}-{month}" | {monthName} {year}
 | {{{{Chart bar|{numUsers}|max=3500}}}}
-| {total}""".format(numUsers = numUsers,
-			 month = month,
+| {total}\n""".format(numUsers = numUsers,
+			 month = "%02d" % month,
 			 monthName = monthName(month),
-			 year = year+2010,
+			 year = year,
 			 total = runningTotal)
 	return output
+
+def addTopUsers(sortedList, count):
+	print "Adding top", count, "users"
+	output = ""
+	for n in range(count):
+		user = sortedList[n]
+		username = user['name']
+		usereditcount = user['editcount']
+		userregistration = user['registration']
+		wikifi_link = 'http://stats.wiki.tf/user/tf/'+username
+		userlink = 'User:'+username
+		if username in usernameSubs:
+			username = usernameSubs[username]
+		# if 'BOT' in username:
+		# 	username = "''"+username+"''"
+		userstarttime = datetime.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')
+		timedelta = (datetime.now() - userstarttime).days
+		editsperday = round(float(usereditcount) / timedelta, 2)
+		output += """|-
+	| {place} || [[{userlink}|{username}]] || {editcount} || {editday} || data-sort-value="{sortabledate}" | {date} || [{wikifi_link} {username}]\n""".format(
+				place = n+1, # List is indexed 0-99, editors are indexed 1-100
+				userlink = userlink,
+				username = username,
+				editcount = locale.format('%d', usereditcount, grouping=True),
+				editday = str(editsperday),
+				sortabledate = time.strftime(r'%Y-%m-%d %H:%M:00', time.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
+				date = time.strftime(r'%H:%M, %d %B %Y', time.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
+				wikifi_link = wikifi_link
+				)
+	return output
+
+
+# Main code starts here.
 
 populate_list()
 
 sortedList = sorted(usersList, key=itemgetter('editcount'), reverse=True)
 timeSortedList = sorted(usersList, key=itemgetter('registration'))
 
-outputString = """User edits statistics. Data accurate as of {0} (GMT). Further stats available at [http://stats.wiki.tf/wiki/tf stats.wiki.tf]
-;Note<nowiki>:</nowiki> All data excludes registered users with no edits.""".format(time.strftime(r'%H:%M, %d %B %Y', time.gmtime()))
+file = open(r'edit_count_table.txt', 'wb')
+file.write("""User edits statistics. Data accurate as of """ + str(time.strftime(r'%H:%M, %d %B %Y', time.gmtime())) + """ (GMT). Further stats available at [http://stats.wiki.tf/wiki/tf stats.wiki.tf].
+;Note: All data excludes registered users with no edits.
 
-outputString += """\n\n== Edit count distribution ==
+== Edit count distribution ==
 {| class="wikitable grid sortable plainlinks" style="text-align: center"
 ! class="header" width="30%" | Number of edits
 ! class="header" width="50%" | Users
-! class="header" width="20%" | Percentage of users"""
-print("""Adding percentage breakdown""")
-outputString += addTableRow(1, 10)
-outputString += addTableRow(11, 100)
-outputString += addTableRow(101, 1000)
-outputString += addTableRow(1001, 5000)
-outputString += addTableRow(5001)
-outputString += """\n|}"""
-print("""Adding joins per month""")
-outputString += """\n\n== User signups ==
+! class="header" width="20%" | Percentage of users
+""" + addTableRow(1, 10) + """
+""" + addTableRow(11, 100) + """
+""" + addTableRow(101, 1000) + """
+""" + addTableRow(1001, 5000) + """
+""" + addTableRow(5001) + """
+|}
+
+== User signups ==
 {| class="wikitable grid sortable plainlinks" style="text-align:center"
 ! class="header" width="30%" | Date
 ! class="header" width="50%" | Signups
-! class="header" width="20%" | Total number of users"""
-outputString += addTimeData(timeSortedList)
-outputString += "\n|}"
-print("""Adding top 100 editors list""")
-outputString += """\n\n== Top editors list ==
-Limited to the top 100.
-Bots are in ''italics''.
+! class="header" width="20%" | Total number of users
+""" + addTimeData(timeSortedList) + """
+|}
 
-{{| class="wikitable grid sortable"
+== Top 100 editors ==
+{| class="wikitable grid sortable"
 ! class="header" | #
 ! class="header" | User
 ! class="header" | Edit count
 ! class="header" | Edits per day
-! class="header" | Registration date""".format(time.strftime(r'%H:%M, %d %B %Y', time.gmtime()))
+! class="header" | Registration date
+! class="header" | Wiki-fi link
+""" + addTopUsers(sortedList, 100) + """
+|}""")
 
-n = 1
-timenow = datetime.now()
-for user in sortedList[:100]:
-	username = user['name']
-	usereditcount = user['editcount']
-	userregistration = user['registration']
-	if username in usernameSubs:
-		username = usernameSubs[username]
-	userlink = 'User:'+username
-	if 'BOT' in username:
-		username = "\'\'"+username+"\'\'"
-	userstarttime = datetime.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')
-	timedelta = timenow - userstarttime
-	editsperday = ('%.2f' % (float(usereditcount)/float(timedelta.days)))
-	outputString += """\n|-
-| {n} || [[{userlink}|{username}]] || {editcount} || {editday} || <span style="display:none;">{sortabledate}</span>{date}""".format(
-			n = str(n),
-			userlink = userlink,
-			username = username,
-			editcount = locale.format('%d', usereditcount, grouping=True),
-			editday = str(editsperday),
-			sortabledate = time.strftime(r'%Y-%m-%d %H:%M:00', time.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
-			date = time.strftime(r'%H:%M, %d %B %Y', time.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ'))
-			)
-	n += 1
-outputString += "\n|}"
-
-file = open(r'edit_count_table.txt', 'wb')
-file.write(outputString)
-print 'Article written to edit_count_table.txt'
+print("Article written to edit_count_table.txt")
 file.close()
