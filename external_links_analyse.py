@@ -5,7 +5,6 @@ import socket
 import urlparse
 import urllib
 import threading
-import time
 import wikitools
 from Queue import Queue
 
@@ -31,18 +30,18 @@ def get_all_articles():
 	params = {
 		'action': 'query',
 		'list': 'allpages',
-		'aplimit': '5000',
+		'aplimit': '500',
 		'apfilterredir': 'nonredirects'
 		}
 
 	print 'Getting list of articles from API...'
 
 	req = wikitools.api.APIRequest(wiki, params)
-	res = req.query(querycontinue=True)
-
-	print 'Done'
-
-	output = [ page['title'] for page in res['query']['allpages'] if is_good_title(page['title']) ]
+	output = []
+	for res in req.queryGen():
+		output += [ page['title'] for page in res['query']['allpages'] if is_good_title(page['title']) ]
+	
+	print 'Done, found', len(output), 'pages'
 
 	return output
 
