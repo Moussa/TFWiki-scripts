@@ -28,3 +28,6 @@ Script for parsing TF2 vdf files.
 
 ## wiki_edit_stats.py
 Script to generate the user [edit stats article](http://wiki.teamfortress.com/wiki/Team_Fortress_Wiki:Reports/Users_by_edit_count) found on the wiki.
+
+## LODTables.py
+Script to generate the tables for [Model Optimization](https://wiki.teamfortress.com/wiki/Model_Optimization). Requires Crowbar to decompile models.
