@@ -1,7 +1,10 @@
-import urllib2, json, time, locale
-from datetime import datetime
-from datetime import date
+import locale
+from urllib2 import urlopen
+from datetime import date, datetime
+from json import loads
 from operator import itemgetter
+from time import strftime, strptime, gmtime
+from urllib import quote
 global NUMYEARS
 NUMYEARS = date.today().year-2010 + 1 # 2014 - 2010 + 1 = 5 (years)
 
@@ -20,7 +23,7 @@ def populate_list(aufrom=None):
 	url = wikiAddress
 	if aufrom:
 		url += r'&aufrom=' + aufrom
-	result = json.loads(urllib2.urlopen(url.encode('utf-8')).read())
+	result = loads(urlopen(url.encode('utf-8')).read())
 	usersList += result['query']['allusers']
 	print 'User count:', len(usersList)
 	if 'query-continue' in result:
@@ -106,13 +109,13 @@ def addTopUsers(sortedList, count):
 		username = user['name']
 		usereditcount = user['editcount']
 		userregistration = user['registration']
-		wikifi_link = 'http://stats.wiki.tf/user/tf/'+username
+		wikifi_link = 'http://stats.wiki.tf/user/tf/'+quote(username)
 		userlink = 'User:'+username
 		if username in usernameSubs:
 			username = usernameSubs[username]
 		# if 'BOT' in username:
 		# 	username = "''"+username+"''"
-		userstarttime = datetime.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')
+		userstarttime = strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')
 		timedelta = (datetime.now() - userstarttime).days
 		editsperday = round(float(usereditcount) / timedelta, 2)
 		output += """|-
@@ -122,8 +125,8 @@ def addTopUsers(sortedList, count):
 				username = username,
 				editcount = locale.format('%d', usereditcount, grouping=True),
 				editday = str(editsperday),
-				sortabledate = time.strftime(r'%Y-%m-%d %H:%M:00', time.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
-				date = time.strftime(r'%H:%M, %d %B %Y', time.strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
+				sortabledate = strftime(r'%Y-%m-%d %H:%M:00', strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
+				date = strftime(r'%H:%M, %d %B %Y', strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
 				wikifi_link = wikifi_link
 				)
 	return output
@@ -137,7 +140,7 @@ sortedList = sorted(usersList, key=itemgetter('editcount'), reverse=True)
 timeSortedList = sorted(usersList, key=itemgetter('registration'))
 
 file = open(r'edit_count_table.txt', 'wb')
-file.write("""User edits statistics. Data accurate as of """ + str(time.strftime(r'%H:%M, %d %B %Y', time.gmtime())) + """ (GMT). Further stats available at [http://stats.wiki.tf/wiki/tf stats.wiki.tf].
+file.write("""User edits statistics. Data accurate as of """ + str(strftime(r'%H:%M, %d %B %Y', gmtime())) + """ (GMT). Further stats available at [http://stats.wiki.tf/wiki/tf stats.wiki.tf].
 ;Note: All data excludes registered users with no edits.
 
 == Edit count distribution ==
