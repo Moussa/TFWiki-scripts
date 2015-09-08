@@ -1,4 +1,3 @@
-import locale
 from urllib2 import urlopen
 from datetime import date, datetime
 from json import loads
@@ -8,12 +7,11 @@ from urllib import quote
 global NUMYEARS
 NUMYEARS = date.today().year-2010 + 1 # 2014 - 2010 + 1 = 5 (years)
 
-locale.setlocale(locale.LC_ALL, '')
-
 wikiAddress = r'http://wiki.teamfortress.com/w/api.php?action=query&list=allusers&auprop=editcount|registration&auwitheditsonly&aulimit=500&format=json'
-usernameSubs = {'Ohyeahcrucz': 'Cructo',
+usernameSubs = {
+				'Ohyeahcrucz': 'Cructo',
 				'I-ghost': 'i-ghost',
-				'Darkid': 'darkid'
+				'Darkid': 'darkid',
 				}
 
 usersList = []
@@ -104,8 +102,9 @@ def addTimeData(timeSortedList):
 def addTopUsers(sortedList, count):
 	print "Adding top", count, "users"
 	output = ""
-	for n in range(count):
-		user = sortedList[n]
+	i = 0
+	while (i < count):
+		user = sortedList[i]
 		username = user['name']
 		usereditcount = user['editcount']
 		userregistration = user['registration']
@@ -113,34 +112,38 @@ def addTopUsers(sortedList, count):
 		userlink = 'User:'+username
 		if username in usernameSubs:
 			username = usernameSubs[username]
-		# if 'BOT' in username:
-		# 	username = "''"+username+"''"
+		place = i+1 # List is indexed 0-99, editors are indexed 1-100
+		if 'BOT' in username:
+			place = "<small>''BOT''</small>"
+			del sortedList[i]
+			i -= 1
 		userstarttime = strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')
-		timedelta = (datetime.now() - userstarttime).days
+		timedelta = (datetime.now() - datetime(*userstarttime[:6])).days
 		editsperday = round(float(usereditcount) / timedelta, 2)
 		output += """|-
-	| {place} || [[{userlink}|{username}]] || {editcount} || {editday} || data-sort-value="{sortabledate}" | {date} || [{wikifi_link} {username}]\n""".format(
-				place = n+1, # List is indexed 0-99, editors are indexed 1-100
+	| {place} || [[{userlink}|{username}]] || {editcount} || {editday}
+	| data-sort-value="{sortabledate}" | {date} || [{wikifi_link} {username}]\n""".format(
+				place = place, # List is indexed 0-99, editors are indexed 1-100
 				userlink = userlink,
 				username = username,
-				editcount = locale.format('%d', usereditcount, grouping=True),
+				editcount = usereditcount,
 				editday = str(editsperday),
-				sortabledate = strftime(r'%Y-%m-%d %H:%M:00', strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
-				date = strftime(r'%H:%M, %d %B %Y', strptime(userregistration, r'%Y-%m-%dT%H:%M:%SZ')),
+				sortabledate = strftime(r'%Y-%m-%d %H:%M:00', userstarttime),
+				date = strftime(r'%H:%M, %d %B %Y', userstarttime),
 				wikifi_link = wikifi_link
 				)
+		i += 1
 	return output
 
-
-# Main code starts here.
-
-populate_list()
-
-sortedList = sorted(usersList, key=itemgetter('editcount'), reverse=True)
-timeSortedList = sorted(usersList, key=itemgetter('registration'))
-
-file = open(r'edit_count_table.txt', 'wb')
-file.write("""User edits statistics. Data accurate as of """ + str(strftime(r'%H:%M, %d %B %Y', gmtime())) + """ (GMT). Further stats available at [http://stats.wiki.tf/wiki/tf stats.wiki.tf].
+if __name__ == '__main__':
+	
+	populate_list() # Fills the global usersList
+	
+	sortedList = sorted(usersList, key=itemgetter('editcount'), reverse=True)
+	timeSortedList = sorted(usersList, key=itemgetter('registration'))
+	
+	file = open(r'edit_count_table.txt', 'wb')
+	file.write("""User edits statistics. Data accurate as of """ + str(strftime(r'%H:%M, %d %B %Y', gmtime())) + """ (GMT). Further stats available at [http://stats.wiki.tf/wiki/tf stats.wiki.tf].
 ;Note: All data excludes registered users with no edits.
 
 == Edit count distribution ==
@@ -165,7 +168,7 @@ file.write("""User edits statistics. Data accurate as of """ + str(strftime(r'%H
 
 == Top 100 editors ==
 {| class="wikitable grid sortable"
-! class="header" | #
+! class="header" data-sort-type="number" | #
 ! class="header" | User
 ! class="header" | Edit count
 ! class="header" | Edits per day
@@ -174,5 +177,5 @@ file.write("""User edits statistics. Data accurate as of """ + str(strftime(r'%H
 """ + addTopUsers(sortedList, 100) + """
 |}""")
 
-print("Article written to edit_count_table.txt")
-file.close()
+	print("Article written to edit_count_table.txt")
+	file.close()
