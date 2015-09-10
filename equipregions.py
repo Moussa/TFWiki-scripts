@@ -37,15 +37,16 @@ def add_region(itemname, TF_classlist, region):
         if itemname not in regionsDict[region][TF_class]:
             regionsDict[region][TF_class].append(itemname)
 
+print 'Adding items...'
 for item in allitems:
     item = allitems[item]
     if 'item_name' in item:
-        if verbose:
-            print 'Processing', item['item_name']
         TF_classlist = {}
         if 'used_by_classes' in item:
             TF_classlist = item['used_by_classes']
         itemname = schema.get_localized_item_name(item['item_name'])
+        if verbose:
+            print 'Processing', itemname
         if 'equip_region' in item:
             if isinstance(item['equip_region'], dict): # Valve are silly and on rare occasions put multiple regions in this field
                 for region in item['equip_region']:
@@ -64,8 +65,12 @@ for item in allitems:
                     if region != 'hat':
                         add_region(itemname, TF_classlist, region.lower())
         elif 'prefab' in item:
+            if isinstance(item['prefab'], list): # Valve are even sillier because sometimes they put their own name in the prefabs list
+                item['prefab'] = item['prefab'][1]
             if item['prefab'] in prefabs:
                 prefab = prefabs[item['prefab']]
+                if 'used_by_classes' in prefab:
+                    TF_classlist.update(prefab['used_by_classes'])
                 if 'equip_region' in prefab and prefab['equip_region'] != 'hat':
                     region = prefab['equip_region']
                     add_region(itemname, TF_classlist, region)
@@ -74,57 +79,39 @@ for item in allitems:
                     print 'Item', itemname, 'has no equip region. Prefab is:', item['prefab']
                 add_region(itemname, TF_classlist, 'none')
 
-### Some output fixes here ###
-#1st/2nd/3rd/4th string:
-ordinal = '\d(st|nd|rd|th)'
-cardinal = '(First|Second|Third|Fourth|Fifth)'
-defaultOrdinal = '('+ordinal+' Place|Participant)'
-defaultCardinal = '('+cardinal+' Place|Participant)'
-
-itemExceptions = [ # Must match full string
+### Begin output fixes ###
+itemExceptions = [ # These are keywords which, if present, will make the item ignored.
     '(Scout|Soldier|Pyro|Demo|Heavy|Engineer|Medic|Sniper|Spy)bot Armor',
-    'Asiafortress Cup Division \d '+defaultOrdinal,
-    'AU Highlander Community League '+defaultCardinal,
-    'BETA LAN '+defaultOrdinal,
-    'ESH Ultiduo #\d Gold Medal',
-    'ESL Season (VI|VII) (Premiership |Premier |)Division (\d |)'+defaultOrdinal,
-    'ETF2L (6v6|Highlander) Division \d Group Winner',
-    'ETF2L (6v6|Highlander) Division \d Participation Medal',
-    'ETF2L 6v6 Premier Division (Bronze|Silver|Gold|Participation) Medal',
-    'ETF2L Highlander Division 1 (Bronze|Silver|Gold) Medal',
-    'ETF2L Highlander Division 1 Group Winner',
-    'ETF2L Highlander Open '+defaultOrdinal,
-    'ETF2L Highlander Premier Division (Bronze|Silver|Gold|Participation) Medal',
-    'ETF2L Ultiduo #\d Gold Medal',
-    'InfoShow TF2 Tournament Participant',
-    'LBTF2 (Access|Central|Elite|Open) '+defaultOrdinal,
     'Medicbot Chariot',
-    'OWL 1\d (Premier |)Division (\d |)'+defaultCardinal,
-    'Ready Steady Pan '+defaultCardinal,
-    'Ready Steady Pan Tournament Helper',
-    'RETF2 EE22 (4v4|6v6|Dodgeball|Pan Tournament) (Participant|Winner)',
-    'RETF2 EE22 Contributor',
     'Sentrybuster',
     'Spine-(Cooling|Tingling|Twisting) Skull', # These are different styles
-    'Tumblr Vs Reddit Participant',
-    'UGC 4vs4 (Silver|Steel) Participant',
-    'UGC 6vs6 '+ordinal+' Place Platinum',
-    'UGC 6vs6 (Steel|Silver|Iron|Gold|Platinum|European) Participant',
-    'UGC Highlander '+ordinal+' Place (European|North|South) (Steel|Silver|Platinum)',
-    'UGC Highlander '+ordinal+' Place[ ]*(Iron|Steel|Silver|Gold|Platinum|)',
-    'UGC Highlander (Steel|Silver|Iron|Gold|Platinum|)[ ]*Participant',
-    'UGC Highlander (Tin|Iron|Silver|Platinum) '+ordinal+' Place',
-    'UGC Highlander Euro (Iron|Silver|Platinum|Participant)',
     'Voodoo-Cursed Soul',
-    defaultCardinal+' - ETF2L Highlander Tournament',
-    defaultCardinal+' - Gamers With Jobs Tournament',
+
+    'Arms Race',
+    'Asiafortress Cup',
+    'AU Highlander Community League',
+    'BETA LAN',
+    'ESH',
+    'ESL',
+    'ETF2L',
+    'FBTF',
+    'Florida LAN',
+    'GA\'lloween',
+    'Gamers Assembly',
+    'Gamers With Jobs',
+    'InfoShow TF2',
+    'LBTF2',
+    'OSL.tf',
+    'OWL',
+    'Ready Steady Pan',
+    'RETF2',
+    'TF2Connexion',
+    'Tumblr Vs Reddit',
+    'UGC',
 ]
 
-if 'medal' in regionsDict:
-    regionsDict['medal']['allclass'].append('Tournament Medal')
-
+print 'Removing items...'
 for region in regionsDict:
-    # Fix Essential Accessories
     if 'The Essential Accessories' in regionsDict[region]['scout']:
         regionsDict[region]['scout'].remove('The Essential Accessories')
         regionsDict[region]['scout'].append('Essential Accessories')
@@ -132,16 +119,20 @@ for region in regionsDict:
     for TF_class in TF_classes:
         for item in regionsDict[region][TF_class]:
             for exception in itemExceptions:
-                if re.match(exception, item):
+                if re.search(exception, item):
                     newlist[TF_class].remove(item)
+                    if verbose:
+                        print item, 'discarded, matched filter', exception
+                    break
     regionsDict[region] = newlist
 ### End output fixes ###
 
 regionsDict = sorted(regionsDict.items())
 output = open('equipregions.txt', 'wb')
 
+print 'Writing output...'
 for regionname, regionitems in regionsDict:
-    # This code does some logic to do with stylistic table modifications.
+    ### Begin style modifications ###
     # If there are no all-class items, that row is left out.
     # If there are only items for a particular class, only list that class.
     # If there are only items for allclass, only list allclass.
@@ -159,7 +150,8 @@ for regionname, regionitems in regionsDict:
             length += len(regionitems[TF_class])
     if length == 0: # If there are no items for any class, there must be items for only allclass
         specificClass = 'allclass'
-    # This ends the stylistic modifications
+    ### End style modifications ###
+    
     output.write('!')
     if not noAllclass and not specificClass:
         output.write(' rowspan="2" |')
@@ -181,7 +173,7 @@ for regionname, regionitems in regionsDict:
                 if TF_class == 'spy' or len(regionitems[TF_class]) > 0:
                     output.write('\n|')
                     if blankLines not in [0,1]:
-                        output.write(' colspan=\"' + str(blankLines) + '\" |')
+                        output.write(' colspan="{}" |'.format(blankLines))
                     if blankLines != 0 and len(regionitems[TF_class]) > 0:
                         output.write('\n|')
                     blankLines = 0
@@ -196,11 +188,12 @@ for regionname, regionitems in regionsDict:
                 if isAllclass or (specificClass == TF_class):
                     output.write('\n| colspan="9" align="center"')
                 output.write(' style="font-weight:bold; font-size:0.95em;" | ')
-            if item == 'Halloween Masks': # Items which need custom images go here
+            # Items which need custom images go here
+            if item == 'Halloween Masks':
                 output.write('[[File:Heavy Mask.png|40px]] [[Halloween Masks{{if lang}}|{{item name|Halloween Masks}}]]')
             else:
                 output.write('{{item nav link|' + item + '|small=yes}}')
     output.write('\n|-\n')
 output.write('|}')
 output.close()
-print '\nDone, printed to equipregions.txt'
+print 'Done, printed to equipregions.txt'
