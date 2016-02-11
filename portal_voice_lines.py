@@ -22,7 +22,7 @@ portal2scripts = {
 	'ka': 'subtitles_koreana.txt',
 	'no': 'subtitles_norwegian.txt',
 	'pl': 'subtitles_polish.txt',
-	'po': 'subtitles_portuguese.txt',
+	'pt': 'subtitles_portuguese.txt',
 	'ro': 'subtitles_romanian.txt',
 	'ru': 'subtitles_russian.txt',
 	'zh-hans': 'subtitles_schinese.txt',
